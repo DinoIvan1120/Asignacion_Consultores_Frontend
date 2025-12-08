@@ -1,0 +1,39 @@
+.conteneder__principal--left {
+  background:
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 1.7) 0%,
+      rgba(0, 0, 0, 0.7) 30%,
+      rgba(0, 0, 0, 0) 60%
+    ),
+    url("../../assets/imagenes/Portal.jpg");
+  background-size: 100% 100%;
+}
+
+.conteneder__principal--left .copy {
+  color: white;
+  position: absolute;
+  top: 77%;
+  left: 8%;
+}
+
+.conteneder__principal--left .copy h1 {
+  font-size: 5.5rem;
+  font-weight: 400 !important;
+  line-height: 5.9rem;
+  margin-bottom: 15px;
+}
+
+/* .conteneder__principal--left .copy h1::after {
+  content: "";
+  display: block;
+  margin-top: 15px;
+  border-bottom: 2px solid #fff;
+  width: 170px;
+  margin-bottom: 15px;
+} */
+
+.conteneder__principal--left .copy p {
+  font-size: 2.3rem;
+  line-height: 3.5rem;
+}

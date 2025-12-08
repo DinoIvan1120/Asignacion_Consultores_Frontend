@@ -1,0 +1,250 @@
+:root {
+  line-height: 1.2;
+  --primary-blue: #2660a3;
+  --primary-dark-blue: #3d7ac0;
+  --primary-red: hsl(0, 55%, 53%);
+  --gray-disabled: #919191;
+}
+
+button:disabled {
+  opacity: 0.6;
+  background: var(--gray-disabled) !important;
+  border-color: var(--gray-disabled) !important;
+  cursor: not-allowed;
+}
+
+.btn {
+  background-color: white;
+  min-width: 100px;
+  font-weight: 400;
+  border: 1px solid;
+  display: flex;
+  justify-content: center;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  font-family: inherit;
+  cursor: pointer;
+  align-items: center;
+}
+
+.btn__primary {
+  border-color: var(--primary-blue);
+  background-color: var(--primary-blue) !important;
+  color: #fff;
+  padding: 10px 12px;
+}
+
+.btn__m {
+  border-color: rgb(210, 205, 205);
+}
+
+.btn__red {
+  background-color: var(--primary-red) !important;
+  color: white;
+}
+
+.btn-disabled {
+  background-color: rgb(
+    176,
+    166,
+    166
+  ); /* Color blanco cuando está desactivado */
+  color: white;
+  padding: 5px;
+}
+
+.filtrar {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+  color: var(--primary-blue);
+}
+
+.btn-enabled {
+  background-color: var(--primary-blue); /* Color azul cuando está activado */
+  color: white;
+  padding: 5px;
+}
+
+.btn--sm {
+  min-width: 70px;
+}
+
+.btn__pedidos {
+  border-color: var(--primary-blue);
+  background-color: var(--primary-blue);
+  color: #fff;
+  margin-right: 10px;
+}
+
+.btn__primary--outline {
+  border-color: white;
+  background: transparent;
+  border-color: var(--primary-blue);
+  color: var(--primary-blue) !important;
+  padding: 10px 12px;
+}
+
+.btn__secondary {
+  border-color: var(--primary-dark-blue);
+  background-color: var(--primary-dark-blue) !important;
+  color: #fff;
+  padding: 10px 12px;
+}
+
+.btn__secondary--outline {
+  border-color: #fff;
+  background-color: var(--primary-blue);
+  color: #fff;
+  padding: 12px;
+}
+.btn__secondary--outline:hover {
+  background-color: var(--primary-dark-blue);
+}
+
+.btn__primary--underline {
+  border: 0;
+  border-radius: 0;
+  color: var(--primary-blue);
+}
+.btn__primary--underline span {
+  font-weight: 500;
+  text-decoration: underline;
+  font-size: 0.8rem;
+}
+
+.btn__red {
+  border-color: var(--primary-red);
+  background-color: var(--primary-red);
+  color: #fff;
+  padding: 10px 12px;
+}
+
+.btn__red--outline {
+  border-color: white;
+  background: transparent;
+  border-color: var(--primary-red);
+  color: var(--primary-red) !important;
+  padding: 10px 12px;
+}
+
+.btn--simple {
+  color: #676767;
+  border: 0;
+  background: transparent;
+}
+.btn--simple span {
+  margin-right: 4px;
+  font-size: 0.9rem;
+}
+
+.btn__onlyico {
+  font-size: 1.1rem;
+}
+.btn--ico {
+  padding: 7px 12px;
+}
+
+.btn--ico i,
+.btn--ico em {
+  margin-right: 7px;
+  font-size: 1.3rem;
+}
+
+.btn__ico.btn__ico--small {
+  font-size: 1.1rem;
+}
+
+.btn--small {
+  min-width: 150px;
+  min-height: 40px;
+}
+
+.btn--medium {
+  min-width: 150px;
+}
+.m-2 {
+  margin: 5px;
+}
+.mt-4 {
+  margin-top: 20px;
+}
+
+select:disabled {
+  background-color: #e3e6e9 !important;
+  background-image: none !important;
+  border: 3px solid #e3e6e9;
+  opacity: 1 !important;
+}
+
+.ta {
+  margin-top: 20px;
+  padding: 5px 5px 5px 0px;
+}
+
+.signup-btn_agregar {
+  width: 70px;
+  background: var(--primary-blue);
+  color: white;
+  font-weight: 700;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  padding: 0.9rem 0.8rem 0.9rem 0.8rem;
+  font-size: 1rem;
+  margin-top: 10px;
+  margin-left: 20px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.signup-btn_agregar_ {
+  width: 30px;
+  border: none;
+  background-color: white;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-top: 20px;
+  margin-left: 20px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.signup-btn {
+  width: 150px;
+  background: var(--primary-blue);
+  color: white;
+  font-weight: 700;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  padding: 1.3rem 1.3rem;
+  font-size: 1rem;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.signup-btn_ {
+  width: 13px;
+  height: 25px;
+  background: var(--primary-blue);
+  color: white;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  padding: 0rem 0rem 0rem 0rem;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .btn--medium {
+    min-width: 0;
+  }
+
+  .btn--ico i,
+  .btn--ico em {
+    margin-right: 7px;
+    font-size: 1rem;
+  }
+}

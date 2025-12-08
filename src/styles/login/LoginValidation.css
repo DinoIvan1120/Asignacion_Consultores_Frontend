@@ -1,0 +1,86 @@
+.acceder {
+  position: absolute;
+}
+
+.container {
+  position: absolute;
+}
+
+.accede {
+  position: absolute;
+}
+.containe {
+  position: absolute;
+}
+
+.input-container.codigo {
+  position: relative;
+  font-size: 0.9rem;
+}
+
+.input-container.codigo p {
+  position: absolute;
+  top: 63px;
+  color: #888;
+  font-size: 9.5px;
+}
+
+.contr-link {
+  color: var(--primary-blue);
+  text-decoration: underline;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.buttonn-container {
+  position: absolute;
+}
+
+.signup-btnn {
+  width: 150px;
+  background: var(--primary-blue);
+  color: white;
+  font-weight: 700;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  padding: 1.3rem 1.3rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+@media (min-width: 375px) and (max-width: 900px) {
+  .accede {
+    top: 320px;
+  }
+
+  .containe {
+    top: 230px;
+  }
+
+  .acceder {
+    top: 430px;
+  }
+
+  .container {
+    top: 350px;
+  }
+}
+
+@media (min-width: 901px) {
+  .acceder {
+    top: 430px;
+  }
+
+  .container {
+    top: 350px;
+  }
+
+  .accede {
+    top: 320px;
+  }
+
+  .containe {
+    top: 230px;
+  }
+}

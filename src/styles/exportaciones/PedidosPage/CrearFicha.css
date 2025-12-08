@@ -1,0 +1,815 @@
+.customModal__content-cerrar {
+  display: flex;
+  justify-content: end;
+}
+
+.customModal__content-button {
+  background-color: white;
+  color: var(--primary-blue);
+  border: none;
+  font-size: 2.3rem;
+  cursor: pointer;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between; /* Alinea los campos horizontalmente */
+  gap: 10px;
+}
+.form-row_ {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start; /* Alinea los campos horizontalmente */
+  gap: 10px;
+}
+
+.form-grouppp label {
+  display: block;
+  text-align: start;
+  margin-bottom: 2px;
+}
+
+form .h[type="text"] {
+  padding: 0.8rem 0.8rem 2rem 0.8rem;
+  margin-bottom: 2.5rem;
+  border: 1px solid #d5ecf8;
+  outline: none;
+  width: 200px;
+}
+
+.hwd {
+  background-color: rgb(233, 233, 237);
+  border: 1px solid #d5ecf8;
+}
+
+/* Estilo del input de tipo file */
+.form-grouppp input[type="file"] {
+  display: none; /* Oculta el campo de carga de archivos por defecto */
+}
+
+/*Estilo para los comentarios*/
+.area {
+  display: block;
+  width: 100%;
+  border-radius: 2px;
+  border: 1px solid #d5ecf8;
+  padding: 0.3rem 0.1rem 2rem 0.5rem;
+  outline: none;
+}
+
+.area-apt {
+  display: block;
+  width: 100%;
+  border-radius: 2px;
+  border: 1px solid #d5ecf8;
+  padding: 0.3rem 0.1rem 2rem 0.5rem;
+  outline: none;
+  height: 100px; /* Altura máxima deseada */
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.area-ap {
+  display: block;
+  width: 100%;
+  border-radius: 2px;
+  border: 1px solid #d5ecf8;
+  padding: 0.3rem 0.1rem 2rem 0.5rem;
+  outline: none;
+  height: 80px;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.area-apt::placeholder {
+  text-align: start;
+}
+
+.area::placeholder {
+  text-align: start;
+}
+
+.area_ {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+  border: 1px solid #d5ecf8;
+  padding: 0.3rem 0.1rem 2rem 0.5rem;
+  outline: none;
+}
+
+.area_::placeholder {
+  text-align: start;
+}
+
+.centroC {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 100vh;
+}
+.error {
+  border: 1px solid red; /* Cambiar el estilo del borde para indicar un error */
+}
+
+.error-message {
+  color: #bc0606; /* Color del mensaje de error */
+  font-size: 14px; /* Tamaño de fuente del mensaje de error */
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.form-rows {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Alinea los campos horizontalmente */
+  gap: 10px;
+}
+
+.form-rows_ {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.form-grouppp-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.form-group-horizontal-item {
+  flex: 1;
+  margin-right: 20px; /* Espacio entre los campos de entrada */
+}
+
+.contenedor {
+  margin-left: 25px;
+  text-align: center;
+}
+
+.contenedor-items {
+  font-size: 12px;
+}
+
+.form-group {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.form-group-horizontal-item {
+  flex: 1;
+  margin-right: 10px; /* Espacio entre los campos de entrada */
+}
+
+.form-grouppp label {
+  display: block;
+  text-align: start;
+  margin-bottom: 2px;
+  font-weight: 500;
+  color: #333333;
+}
+
+.configuration {
+  text-align: center;
+  font-size: 1px;
+  margin-bottom: 3rem;
+}
+
+.configurar {
+  text-align: start;
+}
+
+form .h[type="text"],
+form select,
+.form .h[type="text"],
+.form select {
+  padding: 0.5rem 0.8rem 1.3rem 0.8rem;
+
+  outline: none;
+  width: 200px;
+}
+form .h[type="text"]:read-only,
+.form .h[type="text"]:read-only {
+  background-color: #e3e6e9;
+  border: 3px solid #e3e6e9;
+}
+
+form .react-datepicker-wrapper,
+.form .react-datepicker-wrapper {
+  outline: none;
+  width: 100%;
+}
+form .react-datepicker-wrapper input[type="text"],
+.form .react-datepicker-wrapper input[type="text"] {
+  width: 100%;
+}
+form .hw[type="text"],
+form select,
+.form .hw[type="text"],
+.form select {
+  padding: 0.5rem 0.8rem 0.5rem 0.8rem;
+  background-color: rgb(255, 255, 255);
+  border: 3px solid #e3e6e9;
+  width: auto;
+}
+
+.ht {
+  padding: 0.8rem 0.8rem 0.8rem 1.5rem;
+  outline: none;
+}
+
+form .d[type="text"],
+.form .d[type="text"] {
+  padding: 0.8rem 0.8rem 0.8rem 0.8rem;
+  background-color: rgb(18, 18, 104);
+  width: 270px;
+}
+
+.Migrar {
+  width: 150px;
+  border-radius: 2px;
+  border: 1px solid #d5ecf8;
+  padding: 0.5rem 0.1rem 0.5rem 1rem;
+  outline: none;
+}
+
+.centro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 40px;
+  margin-top: 20px;
+}
+
+.centro__titulo {
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.centro__imagenes {
+  width: 300px;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  border: 1px solid #d5ecf8;
+  align-items: center;
+}
+
+.centro__imagenes--items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.centro__imagenes--imagenes {
+  max-width: 50%;
+  max-height: 50%;
+  border: 1px solid #706666;
+  box-shadow: 0 4px 8px rgb(0, 0, 0, 0.2);
+}
+
+.centro__botones {
+  margin-top: 5px;
+  align-self: center;
+}
+
+.form-grouppp-horizontal_ {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.result-container {
+  max-width: 100px;
+  overflow-y: auto;
+  text-align: center;
+  max-height: 100px;
+}
+
+.result-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+form .t[type="email"] {
+  padding: 0.8rem 0.8rem 0.8rem 0.8rem;
+  margin-bottom: 20px;
+  outline: none;
+  width: 270px;
+}
+
+.result-list li {
+  display: inline-block;
+  margin-right: 10px; /* Espacio entre elementos de la lista */
+}
+
+form .h {
+  border: 1px solid #d5ecf8;
+  padding: 0.78rem 0.8rem;
+  outline: none;
+  width: 200px;
+}
+
+.area {
+  display: block;
+  width: 100%;
+  border-radius: 2px;
+  border: 3px solid #ebecef;
+  padding: 0.3rem 0.1rem 2rem 1rem;
+  outline: none;
+}
+
+.area::placeholder {
+  text-align: start;
+}
+
+.cc {
+  border: 1px solid #d5ecf8;
+  padding: 5px;
+}
+
+.customModal__buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.selector {
+  width: 100px;
+  display: block;
+  border-radius: 2px;
+  border: 1px solid #d5ecf8;
+  padding: 0.6rem 0rem 0.5rem 0rem;
+  outline: none;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.direccion {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.custom-file-input {
+  position: relative;
+}
+
+.attach-button {
+  position: absolute;
+  top: 20%;
+  left: 90%;
+}
+
+.signup-x {
+  background-color: white;
+  color: var(--primary-blue);
+  border: none;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+li {
+  list-style: none;
+}
+
+.signup-btn_agregar {
+  width: 70px;
+  background: var(--primary-blue);
+  color: white;
+  font-weight: 700;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  padding: 0.9rem 0.8rem 0.9rem 0.8rem;
+  font-size: 1rem;
+  margin-top: 10px;
+  margin-left: 20px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.signup-btn_agregar_ {
+  width: 30px;
+  border: none;
+  background-color: white;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-top: 20px;
+  margin-left: 20px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.signup-btn {
+  width: 150px;
+  background: var(--primary-blue);
+  color: white;
+  font-weight: 700;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  padding: 1.3rem 1.3rem;
+  font-size: 1rem;
+  margin-top: 20px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.signup-btn_ {
+  width: 13px;
+  height: 25px;
+  background: var(--primary-blue);
+  color: white;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  padding: 0rem 0rem 0rem 0rem;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.ficha-list {
+  margin-right: 20px;
+}
+
+.label {
+  margin-right: 10px;
+}
+.assign-button {
+  color: blue; /* Color del texto */
+  border: none;
+  border-radius: 4px; /* Bordes redondeados */
+  padding: 4px 4px; /* Espaciado interno */
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s; /* Transición de color de fondo */
+}
+
+/* Estilos para el botón "Asignar" cuando está seleccionado */
+.assign-button.selected {
+  background-color: #28a745; /* Cambia el color de fondo cuando está seleccionado */
+}
+
+/* Estilos para el icono de verificación */
+.assign-button.selected .fa-check {
+  margin-right: 10px; /* Espacio entre el texto y el icono */
+}
+
+/* Estilos para el ícono de verificación */
+.assign-button .fa-check {
+  color: blue; /* Color del icono de verificación */
+  font-size: 12px; /* Tamaño del icono */
+}
+
+.numero {
+  margin-right: 30px;
+}
+
+.confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5); /* Fondo oscuro translúcido */
+  z-index: 1000;
+}
+.confirmation-modal h3 {
+  font-size: 15px;
+  margin: 10px 0 10px 0;
+  font-weight: bold;
+  color: #2f3a4e;
+}
+
+.confirmation-modal__content {
+  background: white;
+  padding: 20px 20px 20px 20px;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(194, 59, 59, 0.2);
+  text-align: center;
+}
+.confirmation-modal__content--success em {
+  color: #28a745;
+  font-size: 3rem;
+  margin-top: 10px;
+  display: block;
+}
+
+.confirmation-modal__content--error em {
+  color: #c2250d;
+  font-size: 3rem;
+  margin-top: 10px;
+  display: block;
+}
+
+.error_Tdata {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.confirmation-modal button {
+  display: inline-block;
+}
+
+.custom-label {
+  display: flex;
+  align-items: flex-end;
+}
+
+.custom-label .ico-element-ficha {
+  margin-right: 8px; /* Espacio entre el icono y el número de ficha */
+  pointer-events: none; /* Evita la interacción del usuario con el icono */
+}
+
+.error-message {
+  font-size: 1rem;
+  color: #e11616;
+  margin-top: 10px; /* Ajusta el margen superior según tus preferencias */
+
+  text-align: center; /* Centra el texto */
+  font-size: 10px;
+}
+
+.error {
+  color: green;
+}
+
+.Migrar.max-reached {
+  border-color: #ccc; /* Cambia el color del borde a gris */
+  background-color: #ccc;
+}
+
+.Migrar:not(.max-reached) {
+  background-color: #fff; /* Establece el fondo a blanco cuando no se alcanza el máximo */
+}
+
+.button-like-link {
+  background: none;
+  border: none;
+  color: var(
+    --primary-blue
+  ); /* o cualquier otro color que desees para los enlaces */
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0; /* Puedes ajustar el relleno según tus preferencias */
+  font-size: inherit;
+}
+/* Agrega estilos según tus necesidades */
+.valid-input {
+  border: 2px solid var(--primary-blue); /* Borde verde para indicar que es válido */
+}
+
+.invalid-length {
+  border: 2px solid red;
+}
+
+.invalid-character {
+  border: 2px solid red;
+}
+
+.centrar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modif {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  justify-content: flex-start;
+  font-size: 1.1rem;
+  gap: 10px;
+}
+
+.c {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.texto_p {
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.paginacion {
+  font-size: 13px;
+}
+
+.modificar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ubicacion {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.label_select {
+  color: #706666;
+  font-size: 15px;
+  align-self: flex-end;
+  margin-right: 15px;
+}
+
+.select_items {
+  align-self: flex-end;
+  margin-right: 50px;
+  margin-bottom: 10px;
+  border-color: rgb(210, 205, 205);
+  min-width: 100px;
+  text-align: center;
+  padding: 2px 2px;
+}
+
+.selectorr {
+  width: 220px;
+  display: block;
+  border-radius: 2px;
+  border: 1px solid #d5ecf8;
+  padding: 0.6rem 0rem 0.5rem 0rem;
+  outline: none;
+  margin-top: 4px;
+}
+
+.required {
+  color: red;
+  font-size: 15px;
+}
+
+/* carga de documentos*/
+
+/* Estilo del input de tipo file */
+.form-grouppp input[type="file"] {
+  display: none; /* Oculta el campo de carga de archivos por defecto */
+}
+
+/* Estilo del contenedor personalizado para el campo de carga de archivos */
+.file-upload-container {
+  display: flex;
+  align-items: center;
+}
+
+/* Estilo del botón de carga de archivos */
+.file-upload-btn {
+  background-color: var(--primary-blue);
+  color: #fff;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.file-upload-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Estilo del contenedor del archivo cargado */
+.file-info {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
+
+/* Estilo del nombre del archivo */
+.file-name {
+  margin-right: 10px;
+}
+
+/* Estilo del botón de eliminar archivo */
+.delete-file-btn {
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.establecer {
+  margin-top: 4px;
+  margin-right: 10px;
+  margin-top: 4px;
+  font-size: 20px;
+}
+
+.fondo {
+  color: white;
+}
+
+/*** colums ***/
+.form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.tag-list {
+  height: 80px;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.tag-listt {
+  height: 130px;
+  max-height: 130px;
+  overflow-y: auto;
+}
+
+.tagg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.tag {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 15px;
+  font-size: 13px;
+}
+.form__grpup {
+  width: 33.33333%;
+}
+
+/* Cambiar de color*/
+
+.asignado {
+  background-color: #156e15;
+}
+
+.asignado input[type="checkbox"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.TextCentro {
+  text-align: center;
+}
+
+.responsive-datepickerr {
+  width: 70vw;
+  max-width: 100%;
+}
+
+.responsive-datepicker .react-datepicker__close-icon {
+  color: red;
+}
+.react-datepicker__input-container {
+  display: inline-block;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.remove-file-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 8px;
+}

@@ -1,0 +1,75 @@
+.customModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 3;
+}
+
+.customModal__content {
+  background-color: white;
+  padding: 20px 20px 20px 20px;
+  box-shadow: 0 0 10px rgba(194, 59, 59, 0.2);
+  text-align: center;
+  border-radius: 4px;
+  /* max-width: 450px; */
+}
+
+.customModal__content h2 {
+  font-size: 1.5rem !important;
+  margin-bottom: 15px;
+  color: black;
+}
+
+.color-red {
+  color: red;
+  font-size: 30px;
+  margin: auto;
+}
+
+.message {
+  font-size: 15px;
+  margin: 10px 0 15px 0;
+  font-weight: bold;
+  color: #2f3a4e;
+}
+
+.customModal__content button {
+  display: inline-block;
+}
+
+.errorModal_content button {
+  width: 100px;
+  background: var(--primary-blue);
+  color: white;
+  border: 1px solid #d5ecf8;
+  border-radius: 4px;
+  padding: 0.7rem 1rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.color-green {
+  color: green;
+  font-size: 30px;
+  margin: auto;
+}
+
+.color-yellow {
+  color: yellow;
+  font-size: 30px;
+  margin: auto;
+}
+
+@media (min-width: 320px) and (max-width: 1019px) {
+  .errorText {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+}

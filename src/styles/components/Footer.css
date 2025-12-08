@@ -1,0 +1,38 @@
+/* Configuración del pie de página */
+
+.containerfooter {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  color: #959596;
+  padding: 0 30px 20px;
+  font-size: 1rem;
+}
+
+.ContainerFotter__parrafo {
+  margin-right: 7px;
+  margin-top: 7px;
+}
+
+.ContainerFotter__parrafo h3 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Media quieries */
+@media (max-width: 900px) {
+  /* Configuración pie de página */
+
+  .containerfooter {
+    justify-content: center;
+  }
+
+  .ContainerFotter__parrafo {
+    margin-right: 11px;
+    margin-top: 10px;
+  }
+
+  .ContainerFotter__parrafo p {
+    font-size: 1.1rem;
+  }
+}

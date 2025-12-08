@@ -1,0 +1,272 @@
+:root {
+  line-height: 1.2;
+  /* --primary-blue: #2660a3; */
+  --primary-blue: #12284c;
+  font-size: 62.5%;
+  font-weight: 400;
+  font-family: "Poppins", sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 13px;
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+}
+body {
+  color: #696969;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: bold !important;
+}
+
+.w-100 {
+  width: 100% !important;
+}
+.w-90 {
+  width: 50%;
+}
+.ww-100 {
+  width: 70%;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #ebecef; /* Color de borde neutral para mantener el diseño */
+}
+
+.text-left {
+  text-align: left;
+}
+
+.block-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.mb-3 {
+  margin-bottom: 10px;
+}
+
+label {
+  font-size: 1rem;
+}
+
+.ico-desasignar {
+  font-size: 1.4rem;
+}
+.mb-5 {
+  text-align: center;
+  margin-left: 80px;
+}
+
+.ico-element-ficha {
+  width: 20px;
+  height: 20px;
+  margin-right: 0px;
+  text-align: center;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url(../../assets/iconos/ico-element-ficha.svg);
+}
+
+.ico-element-desabilitar {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  text-align: center;
+  cursor: pointer;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url(../../assets/imagenes/eliminar.png);
+}
+
+.icon-element-ficha-grande {
+  width: 55px;
+  height: 55px;
+  margin-right: 5px;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url(../../assets/iconos/ico-ficha-grande.svg);
+}
+
+.icon-element-fitro {
+  width: 18px;
+  height: 18px;
+  margin-right: 5px;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url(../../assets/iconos/ico-filtro.svg);
+}
+
+.tag {
+  display: flex;
+  flex-wrap: wrap;
+}
+.tag__item {
+  background-color: #fff;
+  color: var(--primary-blue);
+  box-shadow: inset 0 0 0 1px #bebebe03;
+  max-width: 480px;
+  overflow: hidden;
+  text-align: center;
+  display: inline-flex;
+  vertical-align: middle;
+  border: 1px solid #abc6db;
+  border-radius: 20px;
+  padding: 5px 5px 5px 10px;
+  margin: 5px;
+  font-weight: 500;
+}
+
+.tag__item button {
+  width: 30px;
+  border: none;
+  background-color: transparent;
+  font-size: 1rem;
+  margin-left: 10px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.configurar + .react-datepicker-wrapper,
+.configurar + .react-datepicker-wrapper .react-datepicker__input-container {
+  width: 100%;
+}
+
+.calendarpop + .react-datepicker-wrapper .react-datepicker__input-container {
+  width: 200px;
+}
+.calendarpop
+  + .react-datepicker-wrapper
+  .react-datepicker__input-container
+  input[type="text"] {
+  width: 200px;
+}
+
+.color-red {
+  color: #d10c0c;
+}
+
+.color-primary {
+  color: #0e69cd;
+}
+
+.status {
+  background-color: #d6f5fe;
+  border: 1px solid #7bb8ff;
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: #0e69cd;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.alert {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin: 10px 0;
+}
+.alert--yellow {
+  background-color: #fafce8;
+  border: 1px solid #cdb30e;
+  color: #7e5e00;
+}
+
+.d-flex {
+  display: flex;
+  align-items: start;
+}
+.justify-content {
+  justify-content: space-between;
+}
+.justify-center {
+  justify-content: center;
+}
+
+.m-2 {
+  margin: 10px;
+}
+
+.d-none {
+  display: none;
+}
+.valor-condicion ul {
+  display: inline;
+  padding-left: 5px;
+}
+.valor-condicion ul li {
+  display: inline-flex;
+}
+.valor-condicion ul li::after {
+  content: ";";
+}
+.valor-condicion ul li:last-child::after {
+  display: none;
+}
+.icon-element-editar {
+  width: 18px;
+  height: 18px;
+  margin-right: 5px;
+  display: inline-block;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url(../../assets/imagenes/editar.png);
+}
+
+.icon-element-agregar {
+  width: 18px;
+  height: 18px;
+  margin-right: 5px;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url(../../assets/imagenes/agregar.png);
+}
+
+/* .react-datepicker__current-month {
+  font-size: 10px;
+} */
+
+.table-wrapper {
+  width: 100%;
+  height: calc(100vh - 250px);
+  overflow: auto;
+}
+
+.table-wrapper table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-wrapper table thead {
+  position: -webkit-sticky; /* Safari... */
+  position: sticky;
+  top: 0;
+  left: 0;
+}
+
+.tipo-rol {
+  font-size: 2rem;
+  width: 30px;
+}

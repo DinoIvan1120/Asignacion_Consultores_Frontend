@@ -1,0 +1,308 @@
+.contenedor__principal--right .form {
+  width: 300px;
+  height: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.contenedor__principal--right .form-register {
+  width: 300px;
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.contenedor__principal--right .form .copy {
+  color: black;
+  text-align: center;
+}
+
+.contenedor__principal--right .form .copy .image-container {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-left: 5px;
+  height: 90px;
+}
+
+.contenedor__principal--right .form .copy .image-container img {
+  width: 200px;
+  height: 50px;
+}
+
+.contenedor__principal--right .form .copy h2 {
+  font-size: 2rem;
+  margin-bottom: 13px;
+}
+
+.contenedor__principal--right .form .copy p {
+  margin: 0.2rem 0 3rem 0rem;
+  font-size: 1.1rem;
+}
+
+.contenedor__principal--right .form .copy .texto-registro {
+  margin: 0.2rem 0 2rem 0rem;
+  font-size: 1.1rem;
+}
+
+.contenedor__principal--right .form .input-container.name p {
+  position: absolute;
+  font-size: 0.9rem;
+}
+
+.contenedor__principal--right .form .input-container.name,
+.contenedor__principal--right .form .input-container.password {
+  position: relative;
+  display: inline-block;
+}
+
+.contenedor__principal--right .form .input-container .input-arroba,
+.contenedor__principal--right .form .input-container .input-icon {
+  position: absolute;
+  left: 10px;
+  top: 40%;
+  transform: translateY(-40%);
+  height: 20px;
+  width: 20px;
+  pointer-events: none;
+}
+
+.contenedor__principal--right .form .input-container .register-icon {
+  position: absolute;
+  left: 10px;
+  top: 47%;
+  transform: translateY(-40%);
+  height: 20px;
+  width: 20px;
+  pointer-events: none;
+}
+
+.contenedor__principal--right .form input[type="email"],
+.contenedor__principal--right .form input[type="password"],
+.contenedor__principal--right .form input[type="text"] {
+  display: block;
+  width: 270px;
+  border-radius: 2px;
+  border: 1px solid #d5ecf8;
+  padding: 0.8rem 0.8rem 0.8rem 3.7rem;
+  margin-bottom: 3.45rem;
+  outline: none;
+}
+
+.contenedor__principal--right .form.form-register input[type="email"],
+.contenedor__principal--right .form.form-register input[type="password"],
+.contenedor__principal--right .form.form-register input[type="text"],
+.contenedor__principal--right .form.form-register input[type="date"] {
+  display: block;
+  width: 270px; /* ejemplo diferente */
+  border-radius: 2px;
+  border: 1px solid #d5ecf8; /* color diferente */
+  padding: 1rem 1rem 1rem 4rem;
+  margin-bottom: 2rem;
+  outline: none;
+}
+
+/* Estilo adicional solo para inputs con la clase cambio */
+.contenedor__principal--right
+  .form.form-register
+  .register-input.cambio
+  input[type="text"],
+.contenedor__principal--right
+  .form.form-register
+  .register-input.cambio
+  input[type="date"] {
+  padding: 1rem 1rem 1rem 1.2rem; /* solo cambia el padding */
+}
+
+.contenedor__principal--right .form .codigo[type="text"] {
+  padding-top: 0.25rem;
+  padding-left: 0.8rem;
+  padding-bottom: 0rem;
+}
+
+.contenedor__principal--right .form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.contenedor__principal--right .form .contraseña {
+  position: absolute;
+}
+
+.contenedor__principal--right .form .contraseña-link {
+  color: var(--primary-blue);
+  text-decoration: underline;
+  font-weight: 700;
+  top: 10px;
+  font-size: 1.1rem;
+}
+
+.contenedor__principal--right .form .register-validar-section {
+  position: absolute;
+}
+
+.contenedor__principal--right .form .register-validar-link {
+  color: var(--primary-blue);
+  text-decoration: underline;
+  font-weight: 700;
+  top: 20px;
+  font-size: 1.1rem;
+}
+
+.contenedor__principal--right .form .registrarse {
+  position: absolute;
+}
+
+.contenedor__principal--right .form .registrarseLink {
+  color: var(--primary-blue);
+  text-decoration: underline;
+  font-weight: 700;
+  top: 20px;
+  font-size: 1.1rem;
+}
+
+.contenedor__principal--right .form .button-container {
+  position: absolute;
+}
+
+.contenedor__principal--right .form .button-register-section {
+  position: absolute;
+}
+
+.contenedor__principal--right .form .toggle-password-icon {
+  cursor: pointer;
+  width: 15px;
+  position: absolute;
+  top: 35px;
+  right: 10px;
+  transform: translateY(-50%);
+}
+
+.contenedor__principal--right .form .footer-formulario {
+  position: absolute;
+}
+
+.contenedor__principal--right .form .footer-formulario p {
+  font-size: 1.1rem;
+}
+
+.contenedor__principal--right .form .footer-register {
+  position: absolute;
+}
+
+.contenedor__principal--right .form .footer-register p {
+  font-size: 1.1rem;
+}
+
+@media (min-width: 375px) and (max-width: 900px) {
+  .contenedor__principal--right {
+    margin-top: 55px;
+  }
+
+  .contenedor__principal--right .form .image-container {
+    height: 110px;
+  }
+
+  .contenedor__principal--right .form .image-container img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .contenedor__principal--right .form .input-container.name p {
+    top: 55px;
+    color: #888;
+    margin-top: 4px;
+    font-size: 1rem;
+  }
+
+  .contenedor__principal--right .form .codigo[type="text"] {
+    padding-left: 0.8rem;
+  }
+
+  #password::-webkit-input-placeholder {
+    font-size: 2.8rem;
+    font-weight: 700;
+  }
+
+  .contenedor__principal--right .form .contraseña {
+    top: 435px;
+  }
+
+  .contenedor__principal--right .form .register-validar-section {
+    top: 500px;
+  }
+
+  .contenedor__principal--right .form .button-container {
+    top: 335px;
+  }
+
+  .contenedor__principal--right .form .button-register-section {
+    top: 400px;
+  }
+
+  .contenedor__principal--right .form .footer-formulario {
+    top: 635px;
+  }
+
+  .contenedor__principal--right .form .footer-register {
+    top: 700px;
+  }
+}
+
+@media (min-width: 901px) {
+  .contenedor__principal--right {
+    margin-bottom: 70px;
+  }
+
+  .contenedor__principal--right {
+    flex: 0.51;
+  }
+
+  .contenedor__principal--right .form .image-container {
+    height: 118px;
+  }
+
+  #password::-webkit-input-placeholder {
+    font-size: 2.8rem;
+    font-weight: 600;
+  }
+
+  .contenedor__principal--right .form .contraseña {
+    top: 430px;
+  }
+
+  .contenedor__principal--right .form .registrarse {
+    top: 480px;
+  }
+
+  .contenedor__principal--right .form .register-validar-section {
+    top: 630px;
+  }
+
+  .contenedor__principal--right .form .input-container.name p {
+    top: 57px;
+    color: #888;
+  }
+
+  .contenedor__principal--right .form .button-container {
+    top: 335px;
+  }
+
+  .contenedor__principal--right .form .button-register-section {
+    top: 540px;
+  }
+
+  .contenedor__principal--right .form .footer-formulario {
+    top: 600px;
+  }
+
+  .contenedor__principal--right .form .footer-register {
+    top: 690px;
+  }
+}
