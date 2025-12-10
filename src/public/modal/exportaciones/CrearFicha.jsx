@@ -16,6 +16,9 @@ import { FindAllNameMonedas } from "../../../services/asignaciones/Monedas";
 import { FindAllNameSubFrentes } from "../../../services/asignaciones/SubFrente";
 import { FindAllNameTipoActividad } from "../../../services/asignaciones/TipoActividades";
 
+//Importacion nuevo
+import { FindMonedaByEmpresa } from "../../../services/asignaciones/Empresa";
+
 export function CrearFichaModal({
   isOpen,
   onClose,
@@ -80,6 +83,10 @@ export function CrearFichaModal({
   const [loadingMonedas, setLoadingMonedas] = useState(false);
   const [showMonedaSuggestions, setShowMonedaSuggestions] = useState(false);
   const [monedaFilter, setMonedaFilter] = useState("");
+
+  //MonedasEmprda
+  const [monedaId, setMonedaId] = useState(null);
+  const [monedaDescripcion, setMonedaDescripcion] = useState("");
 
   // Subfrentes
   const [subfrentes, setSubfrentes] = useState([]);
@@ -244,25 +251,49 @@ export function CrearFichaModal({
   }, [accessToken]);
 
   // Cargar monedas
-  useEffect(() => {
-    const loadMonedas = async () => {
-      if (!accessToken) return;
+  // useEffect(() => {
+  //   const loadMonedas = async () => {
+  //     if (!accessToken) return;
 
+  //     try {
+  //       setLoadingMonedas(true);
+  //       const response = await FindAllNameMonedas(accessToken);
+  //       setMonedas(response);
+  //       console.log("Monedas cargadas:", response);
+  //     } catch (error) {
+  //       console.error("Error al cargar monedas:", error);
+  //       setMonedas([]);
+  //     } finally {
+  //       setLoadingMonedas(false);
+  //     }
+  //   };
+
+  //   loadMonedas();
+  // }, [accessToken]);
+
+  //Moneda por empresa
+
+  useEffect(() => {
+    const loadMonedaByEmpresa = async () => {
+      if (!accessToken || !empresaSeleccionadaId) return;
       try {
         setLoadingMonedas(true);
-        const response = await FindAllNameMonedas(accessToken);
-        setMonedas(response);
-        console.log("Monedas cargadas:", response);
+        const response = await FindMonedaByEmpresa(
+          accessToken,
+          empresaSeleccionadaId
+        );
+        setMonedaId(response.idmoneda);
+        setMonedaDescripcion(response.descripcion); // Asumimos que response es un objeto moneda
+        console.log("Moneda por empresa cargada:", response);
       } catch (error) {
-        console.error("Error al cargar monedas:", error);
+        console.error("Error al cargar moneda por empresa:", error);
         setMonedas([]);
       } finally {
         setLoadingMonedas(false);
       }
     };
-
-    loadMonedas();
-  }, [accessToken]);
+    loadMonedaByEmpresa();
+  }, [accessToken, empresaSeleccionadaId]);
 
   // Cargar subfrentes
   useEffect(() => {
@@ -436,10 +467,14 @@ export function CrearFichaModal({
       return;
     }
 
-    if (!monedaSeleccionadaId) {
-      setErrorMessage("Por favor seleccione una moneda");
+    if (!monedaId) {
+      setErrorMessage("La empresa seleccionada no tiene una moneda asignada");
       return;
     }
+    // if (!monedaSeleccionadaId) {
+    //   setErrorMessage("Por favor seleccione una moneda");
+    //   return;
+    // }
 
     if (!fechaInicialValue || !fechaFinalValue) {
       setErrorMessage("Por favor ingrese las fechas de inicio y fin");
@@ -464,11 +499,13 @@ export function CrearFichaModal({
       empresaId: empresaSeleccionadaId,
       contactoId: contactoSeleccionadoId,
       subfrenteId: subfrenteSeleccionadoId,
-      monedaId: monedaSeleccionadaId,
+      //monedaId: monedaSeleccionadaId,
+      monedaId: monedaId,
 
       // Nombres necesarios para crear el título
       consultorNombre: consultorSeleccionadoNombre,
-      monedaNombre: monedaSeleccionadaNombre,
+      //monedaNombre: monedaSeleccionadaNombre,
+      monedaNombre: monedaDescripcion,
 
       // Fechas (string en formato yyyy-mm-dd)
       fechaInicial: fechaInicialValue,
@@ -518,8 +555,10 @@ export function CrearFichaModal({
     setConsultorSeleccionadoId(null);
     setConsultorSeleccionadoNombre("");
     setActividadSeleccionadaId(null);
-    setMonedaSeleccionadaId(null);
-    setMonedaSeleccionadaNombre("");
+    setMonedaId(null);
+    setMonedaDescripcion("");
+    //setMonedaSeleccionadaId(null);
+    //setMonedaSeleccionadaNombre("");
     setSubfrenteSeleccionadoId(null);
     setContactoSeleccionadoId(null);
     setEmpresaSeleccionadaId(null);
@@ -1079,141 +1118,28 @@ export function CrearFichaModal({
             {/* Moneda */}
             <div className="form-grouppp" style={{ position: "relative" }}>
               <label htmlFor="moneda">Moneda *</label>
-              <div style={{ position: "relative", display: "flex" }}>
-                <input
-                  className="h"
-                  type="text"
-                  id="moneda"
-                  value={monedaFilter}
-                  onChange={(e) => {
-                    setMonedaFilter(e.target.value);
-                    setShowMonedaSuggestions(true);
-                    setMonedaSeleccionadaId(null);
-                    setMonedaSeleccionadaNombre("");
-                  }}
-                  onFocus={() => setShowMonedaSuggestions(true)}
-                  onBlur={() =>
-                    setTimeout(() => setShowMonedaSuggestions(false), 200)
-                  }
-                  placeholder={
-                    loadingMonedas ? "Cargando monedas..." : "Buscar moneda..."
-                  }
-                  //disabled={loadingMonedas || isSubmitting}
-                  style={{ paddingRight: "40px" }}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowMonedaSuggestions(!showMonedaSuggestions)
-                  }
-                  //disabled={loadingMonedas || isSubmitting}
-                  style={{
-                    position: "absolute",
-                    right: "5px",
-                    top: "28%",
-                    transform: "translateY(-50%)",
-                    background: "transparent",
-                    border: "none",
-                    cursor:
-                      loadingMonedas || isSubmitting
-                        ? "not-allowed"
-                        : "pointer",
-                    padding: "5px 10px",
-                  }}
-                >
-                  <i
-                    className={`bi ${
-                      showMonedaSuggestions
-                        ? "bi-chevron-up"
-                        : "bi-chevron-down"
-                    }`}
-                    style={{ fontSize: "14px" }}
-                  ></i>
-                </button>
-              </div>
 
-              {showMonedaSuggestions && !loadingMonedas && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + -20px)",
-                    left: 0,
-                    right: 0,
-                    backgroundColor: "white",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    maxHeight: "250px",
-                    overflowY: "auto",
-                    zIndex: 1000,
-                    padding: 0,
-                    margin: 0,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  {monedaFilter && filteredMonedas.length > 0 ? (
-                    filteredMonedas.map((moneda) => (
-                      <div
-                        key={moneda.id}
-                        onClick={() => {
-                          setMonedaFilter(moneda.descripcion);
-                          setMonedaSeleccionadaId(moneda.id);
-                          setMonedaSeleccionadaNombre(moneda.descripcion);
-                          setShowMonedaSuggestions(false);
-                        }}
-                        style={{
-                          padding: "8px 12px",
-                          cursor: "pointer",
-                          borderBottom: "1px solid #eee",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.target.style.backgroundColor = "#f0f0f0")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.target.style.backgroundColor = "white")
-                        }
-                      >
-                        {moneda.descripcion}
-                      </div>
-                    ))
-                  ) : monedaFilter && filteredMonedas.length === 0 ? (
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        color: "#999",
-                        textAlign: "center",
-                      }}
-                    >
-                      No se encontraron monedas
-                    </div>
-                  ) : (
-                    monedas.map((moneda) => (
-                      <div
-                        key={moneda.id}
-                        onClick={() => {
-                          setMonedaFilter(moneda.descripcion);
-                          setMonedaSeleccionadaId(moneda.id);
-                          setMonedaSeleccionadaNombre(moneda.descripcion);
-                          setShowMonedaSuggestions(false);
-                        }}
-                        style={{
-                          padding: "8px 12px",
-                          cursor: "pointer",
-                          borderBottom: "1px solid #eee",
-                          textAlign: "start",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.target.style.backgroundColor = "#f0f0f0")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.target.style.backgroundColor = "white")
-                        }
-                      >
-                        {moneda.descripcion}
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
+              <input
+                type="text"
+                id="moneda"
+                className="h"
+                placeholder={
+                  !empresaSeleccionadaId
+                    ? "seleccione una empresa..."
+                    : loadingMonedas
+                      ? "Cargando clientes..."
+                      : "Buscar contacto..."
+                }
+                value={monedaDescripcion}
+                // value={
+                //   loadingMonedas
+                //     ? "Cargando moneda..."
+                //     : monedaDescripcion || ""
+                // }
+                style={{
+                  cursor: "not-allowed",
+                }}
+              />
             </div>
 
             {/* Contacto */}
@@ -1236,7 +1162,7 @@ export function CrearFichaModal({
                   }
                   placeholder={
                     !empresaSeleccionadaId
-                      ? "Primero seleccione una empresa..."
+                      ? "seleccione una empresa..."
                       : loadingClientes
                         ? "Cargando clientes..."
                         : "Buscar contacto..."

@@ -64,7 +64,7 @@ export const handleApplyFilterClickAsignaciones = async ({
       // Si el usuario selecciona 07/12/2025, buscaremos hasta el inicio del 08/12/2025
       // Esto incluye todos los registros del 07/12/2025 (00:00:00 - 23:59:59)
       const fechaFinAjustada = new Date(endDate);
-      fechaFinAjustada.setDate(fechaFinAjustada.getDate() + 1);
+      fechaFinAjustada.setDate(fechaFinAjustada.getDate());
       filtros.fechaFin = format(fechaFinAjustada, "yyyy-MM-dd");
       console.log("📅 Fecha fin (ajustada +1 día):", filtros.fechaFin);
     }

@@ -355,7 +355,7 @@ export function ActividadesPage() {
   }, [consultorFilter, accessToken]);
 
   // ============================================
-  // 🔥 CARGAR MÁS ASIGNACIONES (CON DETECCIÓN DE FILTROS)
+  // 🔥 CARGAR MÁS ASIGNACIONES (SIMPLIFICADO - SIEMPRE USA FILTRADO)
   // ============================================
   const loadMoreAsignaciones = async () => {
     if (!asignacionesHasMore || loadingAsignaciones) return;
@@ -364,56 +364,46 @@ export function ActividadesPage() {
       setLoadingAsignaciones(true);
       const nextPage = asignacionesPage + 1;
 
-      // ✅ Verificar si hay filtros activos
-      const hayFiltrosActivos =
-        startDate || endDate || clienteFilter || consultorFilter;
+      // ✅ SIEMPRE construir el objeto de filtros (aunque estén vacíos)
+      const filtros = {};
 
-      let response;
-
-      if (hayFiltrosActivos) {
-        // ✅ Si hay filtros, construir el objeto de filtros
-        const filtros = {};
-
-        // Fechas
-        if (startDate) {
-          filtros.fechaInicio = format(startDate, "yyyy-MM-dd");
-        }
-        if (endDate) {
-          filtros.fechaFin = format(endDate, "yyyy-MM-dd");
-        }
-
-        // Cliente (convertir a ID)
-        if (clienteFilter) {
-          const clienteEncontrado = clientes.find(
-            (cliente) =>
-              cliente.nombreCompleto.toLowerCase() ===
-              clienteFilter.toLowerCase()
-          );
-          if (clienteEncontrado) {
-            filtros.idUsuario = clienteEncontrado.id;
-          }
-        }
-
-        // Consultor (enviar nombre)
-        if (consultorFilter && consultorFilter.trim() !== "") {
-          filtros.nombreConsultor = consultorFilter.trim();
-        }
-
-        // Llamar al servicio de filtrado
-        response = await FiltrarAsignaciones(
-          filtros,
-          accessToken,
-          nextPage,
-          10
-        );
-      } else {
-        // Si NO hay filtros, usar el endpoint normal
-        response = await FindAllAsignacionesCoordinador(
-          accessToken,
-          nextPage,
-          10
-        );
+      // Fechas
+      if (startDate) {
+        const year = startDate.getFullYear();
+        const month = String(startDate.getMonth() + 1).padStart(2, "0");
+        const day = String(startDate.getDate()).padStart(2, "0");
+        filtros.fechaInicio = `${year}-${month}-${day}`;
       }
+      if (endDate) {
+        const year = endDate.getFullYear();
+        const month = String(endDate.getMonth() + 1).padStart(2, "0");
+        const day = String(endDate.getDate()).padStart(2, "0");
+        filtros.fechaFin = `${year}-${month}-${day}`;
+      }
+
+      // Cliente (convertir a ID)
+      if (clienteFilter) {
+        const clienteEncontrado = clientes.find(
+          (cliente) =>
+            cliente.nombreCompleto.toLowerCase() === clienteFilter.toLowerCase()
+        );
+        if (clienteEncontrado) {
+          filtros.idUsuario = clienteEncontrado.id;
+        }
+      }
+
+      // Consultor (enviar nombre)
+      if (consultorFilter && consultorFilter.trim() !== "") {
+        filtros.nombreConsultor = consultorFilter.trim();
+      }
+
+      // ✅ SIEMPRE llamar al endpoint de filtrado
+      const response = await FiltrarAsignaciones(
+        filtros,
+        accessToken,
+        nextPage,
+        10
+      );
 
       const nuevasAsignaciones = response.content;
       const cantidadNueva = nuevasAsignaciones.length;
@@ -449,6 +439,11 @@ export function ActividadesPage() {
     console.log(
       `⬅️ Retrocediendo: se eliminaron ${cantidadAEliminar} asignaciones`
     );
+  };
+
+  const formatFechaa = (fecha) => {
+    const dia = new Date(fecha).getDate(); // devuelve número (sin cero adelante)
+    return dia;
   };
 
   // ============================================
@@ -611,9 +606,7 @@ export function ActividadesPage() {
       .includes(consultorFilter.toLowerCase())
   );
 
-  // ============================================
-  // FUNCIONES AUXILIARES
-  // ============================================
+  // ✅ AHORA (corregido con UTC)
   const formatFecha = (timestamp) => {
     if (!timestamp) return "-";
     const date = new Date(timestamp);
@@ -622,6 +615,14 @@ export function ActividadesPage() {
       month: "2-digit",
       year: "numeric",
     });
+  };
+  // 🔥 NUEVA: Formatear fecha para enviar al backend (usa hora local)
+  const formatDateForBackend = (date) => {
+    if (!date) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const handlerOnClickFiltro = () => {

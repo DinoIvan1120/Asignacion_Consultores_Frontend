@@ -1,4 +1,5 @@
 import { FindAllRequerimientosCoordinador } from "../../../services/asignaciones/Requerimientos";
+import { FindAllAsignacionesCoordinador } from "../../../services/detalleasignaciones/listarasignaciones";
 
 /**
  * 🧹 Proceso para limpiar todos los filtros y recargar datos originales
@@ -44,7 +45,7 @@ export const handleClearFiltersRequerimientos = async ({
     //setLoadingRequerimientos(true);
     setLoadingLimpiarFiltros(true);
 
-    const response = await FindAllRequerimientosCoordinador(accessToken, 0, 10);
+    const response = await FindAllAsignacionesCoordinador(accessToken, 0, 10);
 
     setRequerimientos(response.content);
     setRequerimientosPage(0);

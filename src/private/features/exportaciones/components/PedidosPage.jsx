@@ -19,7 +19,8 @@ import { FindAllNameCompany } from "../../../../services/asignaciones/Empresa.js
 import { FindAllEstateRequerimient } from "../../../../services/asignaciones/EstadoRequerimiento.js";
 import { FindAllConsultoresActivos } from "../../../../services/asignaciones/Consultores.js";
 import { FindAllClientesActivos } from "../../../../services/asignaciones/Clientes.js";
-import { FindAllRequerimientosCoordinador } from "../../../../services/asignaciones/Requerimientos.js";
+//import { FindAllAsignacionesCoordinador } from "../../../../services/asignaciones/Requerimientos.js";
+import { FindAllAsignacionesCoordinador } from "../../../../services/detalleasignaciones/listarasignaciones.js";
 import {
   extraerNombreConsultor,
   extraerFechaInicio,
@@ -562,7 +563,7 @@ export function PedidosPage() {
 
       try {
         setLoadingRequerimientos(true);
-        const response = await FindAllRequerimientosCoordinador(
+        const response = await FindAllAsignacionesCoordinador(
           accessToken,
           0,
           10
@@ -682,7 +683,7 @@ export function PedidosPage() {
         );
       } else {
         // Si NO hay filtros, usar el endpoint normal
-        response = await FindAllRequerimientosCoordinador(
+        response = await FindAllAsignacionesCoordinador(
           accessToken,
           nextPage,
           10
@@ -1031,8 +1032,9 @@ export function PedidosPage() {
   };
 
   // ============================================
-  // FUNCIÓN PARA FORMATEAR FECHAS
+  // FUNCIÓN PARA FORMATEAR FECHAS - CORREGIDA PARA UTC
   // ============================================
+  // ✅ AHORA (corregido con UTC)
   const formatFecha = (timestamp) => {
     if (!timestamp) return "-";
     const date = new Date(timestamp);
@@ -1043,6 +1045,16 @@ export function PedidosPage() {
     });
   };
 
+  const formatFechaInicioFinal = (timestamp) => {
+    if (!timestamp) return "-";
+    const date = new Date(timestamp);
+    // 🔥 USAR UTC para evitar problemas de zona horaria
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   console.log(modalData);
 
   //Función cuando se terminar de grabar en el modal crear asignaciones y es existoso
@@ -1050,11 +1062,7 @@ export function PedidosPage() {
   const recargarRequerimientos = async () => {
     try {
       setLoadingRequerimientos(true);
-      const response = await FindAllRequerimientosCoordinador(
-        accessToken,
-        0,
-        10
-      );
+      const response = await FindAllAsignacionesCoordinador(accessToken, 0, 10);
 
       setRequerimientos(response.content);
       setRequerimientosPage(0);
@@ -2441,37 +2449,62 @@ export function PedidosPage() {
                 </tr>
               ) : (
                 <>
-                  {requerimientos.map((req, index) => (
-                    <tr key={req.idRequerimiento}>
-                      <td>{index + 1}</td>
-                      <td>
-                        <strong>{formatFecha(req.fechaRegistro)}</strong>
-                      </td>
-                      <td>{req.empresa.nombrecomercial || "-"}</td>
-                      <td>{req.codRequerimiento || "-"}</td>
-                      <td>{req.idRequerimiento}</td>
-                      <td>{extraerNombreConsultor(req.titulo) || "-"}</td>
-                      <td>
-                        {req.usuario
-                          ? `${req.usuario.nombres ?? ""} ${req.usuario.apepaterno ?? ""} ${req.usuario.apematerno ?? ""}`.trim()
-                          : "-"}
-                      </td>
-                      <td>{req.estadoRequerimiento.descripcion || "-"}</td>
-                      <td>{extraerFechaInicio(req.titulo) || "-"}</td>
-                      <td>{extraerFechaFinal(req.titulo) || "-"} </td>
-                      <td>{req.empresa.moneda.descripcion || "desconocido"}</td>
-                      <td>{req.descripcionEstimacion || "0.00"}</td>
-                      {/* <td>Ver detalle</td> */}
-                      <td className="ficha__group">
-                        <Link
-                          to={`/features/seguimiento/sgr/general/?ticket_id=${req.idRequerimiento}`}
-                        >
-                          {/* <em className="ico-element-ficha"></em> */}
-                          detalle
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  {requerimientos.map((item, index) => {
+                    const req = item.requerimiento; // Requerimiento principal
+                    const act = item.actividadPlanRealConsultor?.[0]; // Primera actividad del arreglo
+
+                    return (
+                      <tr key={req.idRequerimiento}>
+                        <td>{index + 1}</td>
+
+                        <td>
+                          <strong>{formatFecha(req.fechaRegistro)}</strong>
+                        </td>
+
+                        <td>{req?.empresa?.nombrecomercial ?? "-"}</td>
+
+                        <td>{req.codRequerimiento || "-"}</td>
+
+                        <td>{req.idRequerimiento}</td>
+
+                        <td>{extraerNombreConsultor(req.titulo) || "-"}</td>
+
+                        {/* <td>
+                          {act.usuario
+                            ? `${req.usuario.nombres ?? ""} ${req.usuario.apepaterno ?? ""} ${req.usuario.apematerno ?? ""}`.trim()
+                            : "-"}
+                        </td> */}
+
+                        <td>
+                          {req.usuario
+                            ? `${req.usuario.nombres ?? ""} ${req.usuario.apepaterno ?? ""} ${req.usuario.apematerno ?? ""}`.trim()
+                            : "-"}
+                        </td>
+
+                        <td>{req?.estadoRequerimiento?.descripcion ?? "-"}</td>
+
+                        <td>
+                          {formatFechaInicioFinal(act?.fechainicio) || "-"}
+                        </td>
+
+                        <td>{formatFechaInicioFinal(act?.fechafin) || "-"}</td>
+
+                        <td>
+                          {req?.empresa?.moneda?.descripcion ?? "desconocido"}
+                        </td>
+
+                        <td>{req.descripcionEstimacion || "0.00"}</td>
+
+                        <td className="ficha__group">
+                          <Link
+                            to={`/features/seguimiento/sgr/general/?ticket_id=${req.idRequerimiento}`}
+                          >
+                            detalle
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
 
                   {/* ============================================ */}
                   {/* FILA ESPECIAL PARA CONTROLES DE PAGINACIÓN */}

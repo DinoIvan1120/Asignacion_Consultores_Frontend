@@ -49,3 +49,31 @@ export async function FindClientesActivosByEmpresa(token, idEmpresa) {
     throw new Error(getErrorMessage(error));
   }
 }
+
+//Obtener la moneda correspondientea  a una empresa
+export async function FindMonedaByEmpresa(token, idEmpresa) {
+  try {
+    const response = await axios.get(`${API}/empresas/${idEmpresa}/moneda`, {
+      headers: {
+        Authorization: `${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+//Obtener el pais correspondiente a una empresa
+export async function FindPaisByEmpresa(token, idEmpresa) {
+  try {
+    const response = await axios.get(`${API}/empresas/${idEmpresa}/pais`, {
+      headers: {
+        Authorization: `${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}

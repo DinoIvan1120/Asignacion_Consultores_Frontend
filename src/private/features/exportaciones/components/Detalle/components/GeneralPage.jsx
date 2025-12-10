@@ -14,11 +14,14 @@ import {
   UpdateAsignacionCompleta,
 } from "../../../../../../services/detalleasignaciones/asignacionesupdate.js";
 
-// 🔥 IMPORTAR SERVICIOS DE AUTOCOMPLETADO (reutilizados de PedidosPage)
-import { FindAllNameCompany } from "../../../../../../services/asignaciones/Empresa.js";
+// 🔥 IMPORTAR SERVICIOS DE AUTOCOMPLETADO
+import {
+  FindAllNameCompany,
+  FindClientesByEmpresa,
+  FindMonedaByEmpresa,
+  FindPaisByEmpresa,
+} from "../../../../../../services/asignaciones/Empresa.js";
 import { FindAllConsultoresActivos } from "../../../../../../services/asignaciones/Consultores.js";
-import { FindAllClientesActivos } from "../../../../../../services/asignaciones/Clientes.js";
-import { SearchClientesByNombre } from "../../../../../../services/asignaciones/Clientes.js";
 import { SearchConsultoresByNombre } from "../../../../../../services/asignaciones/Consultores.js";
 
 export function GeneralPage() {
@@ -53,7 +56,7 @@ export function GeneralPage() {
     idUsuario: null,
     usuarioNombre: "",
 
-    // Actividad (solo primera actividad por simplicidad)
+    // Actividad
     actividadId: null,
     idusuario: null,
     consultorNombre: "",
@@ -64,12 +67,21 @@ export function GeneralPage() {
     costo: 0,
     facturable: true,
     porcentajeAvance: 0,
+
+    // Moneda
+    monedaId: null,
+    monedaDescripcion: "",
+
+    // 🔥 NUEVO: País
+    paisId: null,
+    paisNombre: "",
   });
 
   // ============================================
   // ESTADOS PARA AUTOCOMPLETADO - EMPRESAS
   // ============================================
   const [empresas, setEmpresas] = useState([]);
+  const [empresasCompletas, setEmpresasCompletas] = useState([]);
   const [loadingEmpresas, setLoadingEmpresas] = useState(false);
   const [showEmpresaSuggestions, setShowEmpresaSuggestions] = useState(false);
 
@@ -89,10 +101,13 @@ export function GeneralPage() {
   // ============================================
   const [clientes, setClientes] = useState([]);
   const [loadingClientes, setLoadingClientes] = useState(false);
-  const [clientesPage, setClientesPage] = useState(0);
-  const [clientesHasMore, setClientesHasMore] = useState(true);
   const [showClienteSuggestions, setShowClienteSuggestions] = useState(false);
-  const [isSearchingClientes, setIsSearchingClientes] = useState(false);
+
+  // ============================================
+  // ESTADOS PARA MONEDA
+  // ============================================
+  const [loadingMoneda, setLoadingMoneda] = useState(false);
+  const [loadingPais, setLoadingPais] = useState(false); // 🔥 NUEVO
 
   // ============================================
   // CARGAR DATOS INICIALES
@@ -110,15 +125,10 @@ export function GeneralPage() {
 
         // Extraer datos del requerimiento
         const req = response.requerimiento;
-        const act =
-          response.actividadPlanRealConsultor &&
-          response.actividadPlanRealConsultor.length > 0
-            ? response.actividadPlanRealConsultor[0]
-            : null;
+        const act = response.actividadPlanRealConsultor?.[0] || null;
 
         // Setear campos editables
         setEditableFields({
-          // Requerimiento
           titulo: req.titulo || "",
           detalle: req.detalle || "",
           descripcionEstimacion: req.descripcionEstimacion || "",
@@ -128,18 +138,12 @@ export function GeneralPage() {
           idSubfrente: req.idSubfrente || null,
           idUsuario: req.idUsuario || null,
           usuarioNombre: req.usuario
-            ? `${req.usuario.nombres || ""} ${req.usuario.apepaterno || ""} ${
-                req.usuario.apematerno || ""
-              }`.trim()
+            ? `${req.usuario.nombres || ""} ${req.usuario.apepaterno || ""} ${req.usuario.apematerno || ""}`.trim()
             : "",
-
-          // Actividad
           actividadId: act?.id || null,
           idusuario: act?.idusuario || null,
           consultorNombre: act?.usuario
-            ? `${act.usuario.nombres || ""} ${act.usuario.apepaterno || ""} ${
-                act.usuario.apematerno || ""
-              }`.trim()
+            ? `${act.usuario.nombres || ""} ${act.usuario.apepaterno || ""} ${act.usuario.apematerno || ""}`.trim()
             : "",
           fechainicio: act?.fechainicio
             ? formatDateForInput(act.fechainicio)
@@ -150,14 +154,19 @@ export function GeneralPage() {
           costo: act?.costo || 0,
           facturable: act?.facturable ?? true,
           porcentajeAvance: act?.porcentajeAvance || 0,
+          monedaId: req.empresa?.moneda?.id || null,
+          monedaDescripcion: req.empresa?.moneda?.descripcion || "",
+
+          // 🔥 NUEVO: País inicial
+          paisId: req.paisNombre?.id || null,
+          paisNombre: req.paisNombre?.nombre || "",
         });
       } catch (error) {
         console.error("❌ Error al cargar asignación:", error);
         setModalData(
           modalMessages.error({
             message:
-              error.message ||
-              "Error al cargar la información del ticket. Por favor, intente nuevamente.",
+              error.message || "Error al cargar la información del ticket.",
           })
         );
         setShowModal(true);
@@ -179,10 +188,13 @@ export function GeneralPage() {
       try {
         setLoadingEmpresas(true);
         const response = await FindAllNameCompany(accessToken);
-        setEmpresas(response);
+        setEmpresasCompletas(response);
+        setEmpresas(response.map((emp) => emp.nombrecomercial));
+        console.log("Empresas cargadas:", response);
       } catch (error) {
         console.error("Error al cargar empresas:", error);
         setEmpresas([]);
+        setEmpresasCompletas([]);
       } finally {
         setLoadingEmpresas(false);
       }
@@ -206,9 +218,7 @@ export function GeneralPage() {
           id: consultor.idUsuario,
           nombreCompleto:
             consultor.nombreCompleto ||
-            `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${
-              consultor.apematerno || ""
-            }`.trim(),
+            `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${consultor.apematerno || ""}`.trim(),
         }));
 
         setConsultores(consultoresData);
@@ -230,7 +240,7 @@ export function GeneralPage() {
   // ============================================
   useEffect(() => {
     const searchConsultores = async () => {
-      if (!accessToken) return;
+      if (!accessToken || !isEditing) return;
 
       if (
         !editableFields.consultorNombre ||
@@ -244,9 +254,7 @@ export function GeneralPage() {
             id: consultor.idUsuario,
             nombreCompleto:
               consultor.nombreCompleto ||
-              `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${
-                consultor.apematerno || ""
-              }`.trim(),
+              `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${consultor.apematerno || ""}`.trim(),
           }));
 
           setConsultores(consultoresData);
@@ -274,9 +282,7 @@ export function GeneralPage() {
           id: consultor.idUsuario,
           nombreCompleto:
             consultor.nombreCompleto ||
-            `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${
-              consultor.apematerno || ""
-            }`.trim(),
+            `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${consultor.apematerno || ""}`.trim(),
         }));
 
         setConsultores(consultoresData);
@@ -295,113 +301,129 @@ export function GeneralPage() {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [editableFields.consultorNombre, accessToken]);
+  }, [editableFields.consultorNombre, accessToken, isEditing]);
 
   // ============================================
-  // CARGAR CLIENTES
+  // CARGAR CLIENTES POR EMPRESA
   // ============================================
   useEffect(() => {
-    const loadClientes = async () => {
-      if (!accessToken) return;
+    const loadClientesPorEmpresa = async () => {
+      if (!accessToken || !editableFields.idEmpresa || !isEditing) {
+        setClientes([]);
+        return;
+      }
 
       try {
         setLoadingClientes(true);
-        const response = await FindAllClientesActivos(accessToken, 0, 10);
+        console.log(
+          "🔍 Cargando clientes para empresa ID:",
+          editableFields.idEmpresa
+        );
 
-        const clientesData = response.content.map((cliente) => ({
+        const response = await FindClientesByEmpresa(
+          accessToken,
+          editableFields.idEmpresa
+        );
+
+        const clientesFormateados = response.map((cliente) => ({
           id: cliente.idUsuario,
-          nombreCompleto:
-            cliente.nombreCompleto ||
-            `${cliente.nombres || ""} ${cliente.apepaterno || ""} ${
-              cliente.apematerno || ""
-            }`.trim(),
+          nombreCompleto: cliente.nombreCompleto || "-",
         }));
 
-        setClientes(clientesData);
-        setClientesPage(0);
-        setClientesHasMore(!response.last);
+        setClientes(clientesFormateados);
+        console.log("✅ Clientes cargados:", clientesFormateados);
       } catch (error) {
-        console.error("Error al cargar clientes:", error);
+        console.error("❌ Error al cargar clientes por empresa:", error);
         setClientes([]);
       } finally {
         setLoadingClientes(false);
       }
     };
 
-    loadClientes();
-  }, [accessToken]);
+    loadClientesPorEmpresa();
+  }, [accessToken, editableFields.idEmpresa, isEditing]);
 
   // ============================================
-  // BÚSQUEDA DE CLIENTES CON DEBOUNCE
+  // CARGAR MONEDA POR EMPRESA
   // ============================================
   useEffect(() => {
-    const searchClientes = async () => {
-      if (!accessToken) return;
-
-      if (
-        !editableFields.usuarioNombre ||
-        editableFields.usuarioNombre.trim() === ""
-      ) {
-        try {
-          setIsSearchingClientes(true);
-          const response = await FindAllClientesActivos(accessToken, 0, 10);
-
-          const clientesData = response.content.map((cliente) => ({
-            id: cliente.idUsuario,
-            nombreCompleto:
-              cliente.nombreCompleto ||
-              `${cliente.nombres || ""} ${cliente.apepaterno || ""} ${
-                cliente.apematerno || ""
-              }`.trim(),
-          }));
-
-          setClientes(clientesData);
-          setClientesPage(0);
-          setClientesHasMore(!response.last);
-        } catch (error) {
-          console.error("Error al cargar clientes:", error);
-          setClientes([]);
-        } finally {
-          setIsSearchingClientes(false);
-        }
-        return;
-      }
+    const loadMonedaByEmpresa = async () => {
+      if (!accessToken || !editableFields.idEmpresa || !isEditing) return;
 
       try {
-        setIsSearchingClientes(true);
-        const response = await SearchClientesByNombre(
-          accessToken,
-          editableFields.usuarioNombre.trim(),
-          0,
-          20
+        setLoadingMoneda(true);
+        console.log(
+          "🔍 Cargando moneda para empresa ID:",
+          editableFields.idEmpresa
         );
 
-        const clientesData = response.content.map((cliente) => ({
-          id: cliente.idUsuario,
-          nombreCompleto:
-            cliente.nombreCompleto ||
-            `${cliente.nombres || ""} ${cliente.apepaterno || ""} ${
-              cliente.apematerno || ""
-            }`.trim(),
+        const response = await FindMonedaByEmpresa(
+          accessToken,
+          editableFields.idEmpresa
+        );
+
+        setEditableFields((prev) => ({
+          ...prev,
+          monedaId: response.idmoneda,
+          monedaDescripcion: response.descripcion,
         }));
 
-        setClientes(clientesData);
-        setClientesPage(0);
-        setClientesHasMore(!response.last);
+        console.log("✅ Moneda cargada:", response);
       } catch (error) {
-        console.error("Error al buscar clientes:", error);
-        setClientes([]);
+        console.error("❌ Error al cargar moneda por empresa:", error);
+        setEditableFields((prev) => ({
+          ...prev,
+          monedaId: null,
+          monedaDescripcion: "",
+        }));
       } finally {
-        setIsSearchingClientes(false);
+        setLoadingMoneda(false);
       }
     };
 
-    const timeoutId = setTimeout(() => {
-      searchClientes();
-    }, 500);
+    loadMonedaByEmpresa();
+  }, [accessToken, editableFields.idEmpresa, isEditing]);
 
-    return () => clearTimeout(timeoutId);
-  }, [editableFields.usuarioNombre, accessToken]);
+  // ============================================
+  // 🔥 NUEVO: CARGAR PAÍS POR EMPRESA
+  // ============================================
+  useEffect(() => {
+    const loadPaisByEmpresa = async () => {
+      if (!accessToken || !editableFields.idEmpresa || !isEditing) return;
+
+      try {
+        setLoadingPais(true);
+        console.log(
+          "🔍 Cargando país para empresa ID:",
+          editableFields.idEmpresa
+        );
+
+        const response = await FindPaisByEmpresa(
+          accessToken,
+          editableFields.idEmpresa
+        );
+
+        setEditableFields((prev) => ({
+          ...prev,
+          paisId: response.idPais,
+          paisNombre: response.nombre,
+        }));
+
+        console.log("✅ País cargado:", response);
+      } catch (error) {
+        console.error("❌ Error al cargar país por empresa:", error);
+        setEditableFields((prev) => ({
+          ...prev,
+          paisId: null,
+          paisNombre: "",
+        }));
+      } finally {
+        setLoadingPais(false);
+      }
+    };
+
+    loadPaisByEmpresa();
+  }, [accessToken, editableFields.idEmpresa, isEditing]);
 
   // ============================================
   // CARGAR MÁS CONSULTORES (PAGINACIÓN)
@@ -423,9 +445,7 @@ export function GeneralPage() {
         id: consultor.idUsuario,
         nombreCompleto:
           consultor.nombreCompleto ||
-          `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${
-            consultor.apematerno || ""
-          }`.trim(),
+          `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${consultor.apematerno || ""}`.trim(),
       }));
 
       setConsultores((prev) => [...prev, ...nuevosConsultores]);
@@ -439,75 +459,45 @@ export function GeneralPage() {
   };
 
   // ============================================
-  // CARGAR MÁS CLIENTES (PAGINACIÓN)
-  // ============================================
-  const loadMoreClientes = async () => {
-    if (!clientesHasMore || loadingClientes || isSearchingClientes) return;
-
-    try {
-      setLoadingClientes(true);
-      const nextPage = clientesPage + 1;
-      let response;
-
-      if (
-        editableFields.usuarioNombre &&
-        editableFields.usuarioNombre.trim() !== ""
-      ) {
-        response = await SearchClientesByNombre(
-          accessToken,
-          editableFields.usuarioNombre.trim(),
-          nextPage,
-          20
-        );
-      } else {
-        response = await FindAllClientesActivos(accessToken, nextPage, 10);
-      }
-
-      const nuevosClientes = response.content.map((cliente) => ({
-        id: cliente.idUsuario,
-        nombreCompleto:
-          cliente.nombreCompleto ||
-          `${cliente.nombres || ""} ${cliente.apepaterno || ""} ${
-            cliente.apematerno || ""
-          }`.trim(),
-      }));
-
-      setClientes((prev) => [...prev, ...nuevosClientes]);
-      setClientesPage(nextPage);
-      setClientesHasMore(!response.last);
-    } catch (error) {
-      console.error("Error al cargar más clientes:", error);
-    } finally {
-      setLoadingClientes(false);
-    }
-  };
-
-  // ============================================
-  // FUNCIONES AUXILIARES
+  // FUNCIONES AUXILIARES - CORREGIDAS PARA UTC
   // ============================================
   const formatFecha = (timestamp) => {
     if (!timestamp) return "-";
     const date = new Date(timestamp);
-    return date.toLocaleDateString("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    // 🔥 USAR UTC para evitar problemas de zona horaria
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const formatDateForInput = (timestamp) => {
     if (!timestamp) return "";
     const date = new Date(timestamp);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    // 🔥 USAR UTC para evitar que reste un día
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
   const formatDateToISO = (dateString) => {
     if (!dateString) return "";
+    // 🔥 Mantener la fecha exacta sin conversión de zona horaria
     const [year, month, day] = dateString.split("-");
     return `${year}-${month}-${day}T00:00:00`;
+  };
+
+  // 🔥 NUEVA FUNCIÓN: Comparar fechas sin zona horaria
+  const areDatesEqual = (date1, date2) => {
+    if (!date1 && !date2) return true;
+    if (!date1 || !date2) return false;
+
+    // Extraer solo la parte de fecha (YYYY-MM-DD)
+    const d1 = formatDateForInput(date1);
+    const d2 = formatDateForInput(date2);
+
+    return d1 === d2;
   };
 
   // ============================================
@@ -520,14 +510,35 @@ export function GeneralPage() {
     }));
   };
 
+  // 🔥 MANEJADOR ESPECIAL PARA SELECCIÓN DE EMPRESA
+  const handleEmpresaSelect = (nombreEmpresa) => {
+    const empresaEncontrada = empresasCompletas.find(
+      (emp) => emp.nombrecomercial === nombreEmpresa
+    );
+
+    if (empresaEncontrada) {
+      console.log("🏢 Empresa seleccionada:", empresaEncontrada);
+
+      setEditableFields((prev) => ({
+        ...prev,
+        empresaNombre: nombreEmpresa,
+        idEmpresa: empresaEncontrada.id,
+        // 🔥 RESETEAR CONTACTO AL CAMBIAR EMPRESA
+        usuarioNombre: "",
+        idUsuario: null,
+      }));
+
+      setShowEmpresaSuggestions(false);
+    }
+  };
+
   // ============================================
-  // GUARDAR CAMBIOS
+  // FUNCIÓN CORREGIDA PARA GUARDAR CAMBIOS
   // ============================================
   const handleGuardarCambios = async () => {
     try {
       setIsSaving(true);
 
-      // Construir objeto de actualización
       const datosActualizacion = {};
 
       // ✅ REQUERIMIENTO
@@ -565,6 +576,24 @@ export function GeneralPage() {
         hayRequerimientoUpdates = true;
       }
 
+      // 🔥 VERIFICAR CAMBIOS EN EMPRESA
+      if (
+        editableFields.idEmpresa !== asignacionData.requerimiento.idEmpresa &&
+        editableFields.idEmpresa !== null
+      ) {
+        requerimientoUpdates.idEmpresa = editableFields.idEmpresa;
+        hayRequerimientoUpdates = true;
+      }
+
+      // 🔥 VERIFICAR CAMBIOS EN USUARIO/CONTACTO
+      if (
+        editableFields.idUsuario !== asignacionData.requerimiento.idUsuario &&
+        editableFields.idUsuario !== null
+      ) {
+        requerimientoUpdates.idUsuario = editableFields.idUsuario;
+        hayRequerimientoUpdates = true;
+      }
+
       if (hayRequerimientoUpdates) {
         datosActualizacion.requerimiento = requerimientoUpdates;
       }
@@ -572,15 +601,10 @@ export function GeneralPage() {
       // ✅ ACTIVIDADES
       const actividadesUpdates = [];
       const actividadOriginal =
-        asignacionData.actividadPlanRealConsultor &&
-        asignacionData.actividadPlanRealConsultor.length > 0
-          ? asignacionData.actividadPlanRealConsultor[0]
-          : null;
+        asignacionData.actividadPlanRealConsultor?.[0] || null;
 
       if (actividadOriginal && editableFields.actividadId) {
-        const actividadUpdate = {
-          id: editableFields.actividadId,
-        };
+        const actividadUpdate = { id: editableFields.actividadId };
         let hayActividadUpdates = false;
 
         if (
@@ -591,22 +615,68 @@ export function GeneralPage() {
           hayActividadUpdates = true;
         }
 
-        const fechaInicioISO = formatDateToISO(editableFields.fechainicio);
+        // 🔍 LOGS DE DEBUG DETALLADOS
+        console.log("🔍 DEBUG - Datos de fechas:");
+        console.log("  actividadOriginal completo:", actividadOriginal);
+        console.log(
+          "  actividadOriginal.fechainicio:",
+          actividadOriginal.fechainicio
+        );
+        console.log(
+          "  actividadOriginal.fechafin:",
+          actividadOriginal.fechafin
+        );
+        console.log(
+          "  editableFields.fechainicio:",
+          editableFields.fechainicio
+        );
+        console.log("  editableFields.fechafin:", editableFields.fechafin);
+
+        // 🔥 COMPARACIÓN DE FECHAS CORREGIDA
+        // Comparar directamente los valores del input (YYYY-MM-DD) con las fechas originales formateadas
+        const fechaInicioInput = editableFields.fechainicio; // Ya está en formato YYYY-MM-DD
         const fechaInicioOriginal = actividadOriginal.fechainicio
-          ? formatDateToISO(formatDateForInput(actividadOriginal.fechainicio))
+          ? formatDateForInput(actividadOriginal.fechainicio)
           : "";
-        if (fechaInicioISO !== fechaInicioOriginal) {
-          actividadUpdate.fechainicio = fechaInicioISO;
+
+        console.log("  fechaInicioInput (del formulario):", fechaInicioInput);
+        console.log("  fechaInicioOriginal (formateada):", fechaInicioOriginal);
+        console.log(
+          "  ¿Son iguales?:",
+          fechaInicioInput === fechaInicioOriginal
+        );
+
+        if (fechaInicioInput !== fechaInicioOriginal) {
+          const isoDate = formatDateToISO(fechaInicioInput);
+          actividadUpdate.fechainicio = isoDate;
           hayActividadUpdates = true;
+          console.log("✅ Fecha inicio CAMBIÓ:");
+          console.log("   Original:", fechaInicioOriginal);
+          console.log("   Nueva:", fechaInicioInput);
+          console.log("   ISO enviado:", isoDate);
+        } else {
+          console.log("⏭️ Fecha inicio SIN CAMBIOS");
         }
 
-        const fechaFinISO = formatDateToISO(editableFields.fechafin);
+        const fechaFinInput = editableFields.fechafin; // Ya está en formato YYYY-MM-DD
         const fechaFinOriginal = actividadOriginal.fechafin
-          ? formatDateToISO(formatDateForInput(actividadOriginal.fechafin))
+          ? formatDateForInput(actividadOriginal.fechafin)
           : "";
-        if (fechaFinISO !== fechaFinOriginal) {
-          actividadUpdate.fechafin = fechaFinISO;
+
+        console.log("  fechaFinInput (del formulario):", fechaFinInput);
+        console.log("  fechaFinOriginal (formateada):", fechaFinOriginal);
+        console.log("  ¿Son iguales?:", fechaFinInput === fechaFinOriginal);
+
+        if (fechaFinInput !== fechaFinOriginal) {
+          const isoDate = formatDateToISO(fechaFinInput);
+          actividadUpdate.fechafin = isoDate;
           hayActividadUpdates = true;
+          console.log("✅ Fecha fin CAMBIÓ:");
+          console.log("   Original:", fechaFinOriginal);
+          console.log("   Nueva:", fechaFinInput);
+          console.log("   ISO enviado:", isoDate);
+        } else {
+          console.log("⏭️ Fecha fin SIN CAMBIOS");
         }
 
         if (editableFields.tiemporegular !== actividadOriginal.tiemporegular) {
@@ -639,41 +709,45 @@ export function GeneralPage() {
         datosActualizacion.actividades = actividadesUpdates;
       }
 
-      // Validar que hay cambios
+      // 🔥 VALIDAR QUE HAY CAMBIOS
       if (
         !datosActualizacion.requerimiento &&
         !datosActualizacion.actividades
       ) {
         setModalData(
-          modalMessages.warning({
-            message: "No se detectaron cambios para actualizar.",
+          modalMessages.error({
+            message: "No se encontraron cambios para guardar.",
           })
         );
         setShowModal(true);
+        setIsSaving(false);
         return;
       }
 
       console.log("📤 Enviando actualización:", datosActualizacion);
 
-      // Llamar al servicio de actualización
-      const response = await UpdateAsignacionCompleta(
+      // 1️⃣ ENVIAR LA ACTUALIZACIÓN
+      await UpdateAsignacionCompleta(
         accessToken,
         ticket_id,
         datosActualizacion
       );
 
-      console.log("✅ Actualización exitosa:", response);
+      console.log("✅ Actualización enviada correctamente");
 
-      // Actualizar el estado local
-      setAsignacionData(response);
+      // 2️⃣ OBTENER DATOS FRESCOS DEL BACKEND
+      console.log("🔄 Recargando datos completos...");
+      const responseCompleta = await GetAsignacionCompleta(
+        accessToken,
+        ticket_id
+      );
 
-      // Actualizar los campos editables con la respuesta
-      const req = response.requerimiento;
-      const act =
-        response.actividadPlanRealConsultor &&
-        response.actividadPlanRealConsultor.length > 0
-          ? response.actividadPlanRealConsultor[0]
-          : null;
+      console.log("✅ Datos frescos obtenidos:", responseCompleta);
+      setAsignacionData(responseCompleta);
+
+      // 3️⃣ ACTUALIZAR CAMPOS EDITABLES CON LOS DATOS FRESCOS
+      const req = responseCompleta.requerimiento;
+      const act = responseCompleta.actividadPlanRealConsultor?.[0] || null;
 
       setEditableFields({
         titulo: req.titulo || "",
@@ -685,16 +759,12 @@ export function GeneralPage() {
         idSubfrente: req.idSubfrente || null,
         idUsuario: req.idUsuario || null,
         usuarioNombre: req.usuario
-          ? `${req.usuario.nombres || ""} ${req.usuario.apepaterno || ""} ${
-              req.usuario.apematerno || ""
-            }`.trim()
+          ? `${req.usuario.nombres || ""} ${req.usuario.apepaterno || ""} ${req.usuario.apematerno || ""}`.trim()
           : "",
         actividadId: act?.id || null,
         idusuario: act?.idusuario || null,
         consultorNombre: act?.usuario
-          ? `${act.usuario.nombres || ""} ${act.usuario.apepaterno || ""} ${
-              act.usuario.apematerno || ""
-            }`.trim()
+          ? `${act.usuario.nombres || ""} ${act.usuario.apepaterno || ""} ${act.usuario.apematerno || ""}`.trim()
           : "",
         fechainicio: act?.fechainicio
           ? formatDateForInput(act.fechainicio)
@@ -705,25 +775,80 @@ export function GeneralPage() {
         costo: act?.costo || 0,
         facturable: act?.facturable ?? true,
         porcentajeAvance: act?.porcentajeAvance || 0,
+        monedaId: req.empresa?.moneda?.id || null,
+        monedaDescripcion: req.empresa?.moneda?.descripcion || "",
+
+        // 🔥 ACTUALIZAR PAÍS
+        paisId: req.paisNombre?.id || null,
+        paisNombre: req.paisNombre?.nombre || "",
       });
 
-      // Mostrar modal de éxito
+      // 4️⃣ RECARGAR CLIENTES SI HAY EMPRESA
+      if (req.idEmpresa) {
+        try {
+          console.log("🔄 Recargando clientes para empresa:", req.idEmpresa);
+          const clientesResponse = await FindClientesByEmpresa(
+            accessToken,
+            req.idEmpresa
+          );
+
+          const clientesFormateados = clientesResponse.map((cliente) => ({
+            id: cliente.idUsuario,
+            nombreCompleto: cliente.nombreCompleto || "-",
+          }));
+
+          setClientes(clientesFormateados);
+          console.log("✅ Clientes actualizados:", clientesFormateados.length);
+        } catch (error) {
+          console.error("❌ Error al recargar clientes:", error);
+          setClientes([]);
+        }
+      }
+
+      // 5️⃣ ACTUALIZAR CONSULTOR EN LA LISTA SI ES NECESARIO
+      if (act?.usuario && act.idusuario) {
+        const nombreCompletoConsultor =
+          typeof act.usuario === "string"
+            ? act.usuario
+            : `${act.usuario.nombres || ""} ${act.usuario.apepaterno || ""} ${act.usuario.apematerno || ""}`.trim();
+
+        const consultorExiste = consultores.some((c) => c.id === act.idusuario);
+
+        if (!consultorExiste) {
+          console.log(
+            "🔄 Agregando consultor a la lista:",
+            nombreCompletoConsultor
+          );
+          const nuevoConsultor = {
+            id: act.idusuario,
+            nombreCompleto: nombreCompletoConsultor,
+          };
+          setConsultores((prev) => [nuevoConsultor, ...prev]);
+        }
+      }
+
+      console.log("✅ UI actualizada con datos frescos");
+      console.log("📊 Datos finales:", {
+        empresa: req.empresa?.nombrecomercial,
+        consultor: act?.usuario,
+        cliente: req.usuario
+          ? `${req.usuario.nombres || ""} ${req.usuario.apepaterno || ""}`.trim()
+          : "-",
+        moneda: req.empresa?.moneda?.descripcion,
+      });
+
       setModalData(
         modalMessages.success({
-          message: `Ticket #${ticket_id} actualizado exitosamente.`,
+          message: `Ticket ${ticket_id} actualizado exitosamente.`,
         })
       );
       setShowModal(true);
-
-      // Desactivar modo edición
       setIsEditing(false);
     } catch (error) {
       console.error("❌ Error al guardar cambios:", error);
       setModalData(
         modalMessages.error({
-          message:
-            error.message ||
-            "Error al actualizar el ticket. Por favor, intente nuevamente.",
+          message: error.message || "Error al actualizar el ticket.",
         })
       );
       setShowModal(true);
@@ -736,9 +861,7 @@ export function GeneralPage() {
   // FILTROS PARA AUTOCOMPLETADO
   // ============================================
   const filteredEmpresas = empresas.filter((empresa) =>
-    empresa.nombrecomercial
-      .toLowerCase()
-      .includes(editableFields.empresaNombre.toLowerCase())
+    empresa.toLowerCase().includes(editableFields.empresaNombre.toLowerCase())
   );
 
   const filteredConsultores = consultores.filter((consultor) =>
@@ -790,11 +913,7 @@ export function GeneralPage() {
   }
 
   const req = asignacionData.requerimiento;
-  const act =
-    asignacionData.actividadPlanRealConsultor &&
-    asignacionData.actividadPlanRealConsultor.length > 0
-      ? asignacionData.actividadPlanRealConsultor[0]
-      : null;
+  const act = asignacionData.actividadPlanRealConsultor?.[0] || null;
 
   return (
     <>
@@ -816,7 +935,7 @@ export function GeneralPage() {
 
       <div className="detalle">
         <div className="detalle__body form">
-          {/* ========== REQUERIMIENTO ========== */}
+          {/* ========== EMPRESA ========== */}
           <div className="detalle__body__col--uno">
             <label>Nombre comercial (Empresa)</label>
             <div style={{ position: "relative" }}>
@@ -861,17 +980,10 @@ export function GeneralPage() {
                       }}
                     >
                       {filteredEmpresas.length > 0 ? (
-                        filteredEmpresas.map((empresa) => (
+                        filteredEmpresas.map((empresa, index) => (
                           <li
-                            key={empresa.id}
-                            onClick={() => {
-                              handleInputChange("idEmpresa", empresa.id);
-                              handleInputChange(
-                                "empresaNombre",
-                                empresa.nombrecomercial
-                              );
-                              setShowEmpresaSuggestions(false);
-                            }}
+                            key={index}
+                            onClick={() => handleEmpresaSelect(empresa)}
                             style={{
                               padding: "8px 12px",
                               cursor: "pointer",
@@ -884,7 +996,7 @@ export function GeneralPage() {
                               (e.target.style.backgroundColor = "white")
                             }
                           >
-                            {empresa.nombrecomercial}
+                            {empresa}
                           </li>
                         ))
                       ) : (
@@ -912,6 +1024,7 @@ export function GeneralPage() {
             </div>
           </div>
 
+          {/* ========== CONSULTOR ========== */}
           <div className="detalle__body__col--uno">
             <label>Consultor</label>
             <div style={{ position: "relative" }}>
@@ -945,9 +1058,6 @@ export function GeneralPage() {
                         maxHeight: "250px",
                         overflowY: "auto",
                         zIndex: 1000,
-                        listStyle: "none",
-                        padding: 0,
-                        margin: 0,
                         boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                       }}
                     >
@@ -1019,9 +1129,7 @@ export function GeneralPage() {
                   type="text"
                   value={
                     act?.usuario
-                      ? `${act.usuario.nombres || ""} ${
-                          act.usuario.apepaterno || ""
-                        } ${act.usuario.apematerno || ""}`.trim()
+                      ? `${act.usuario.nombres || ""} ${act.usuario.apepaterno || ""} ${act.usuario.apematerno || ""}`.trim()
                       : "-"
                   }
                   className="w-100"
@@ -1031,6 +1139,7 @@ export function GeneralPage() {
             </div>
           </div>
 
+          {/* ========== CLIENTE/CONTACTO ========== */}
           <div className="detalle__body__col--uno">
             <label>Cliente (Contacto)</label>
             <div style={{ position: "relative" }}>
@@ -1047,11 +1156,18 @@ export function GeneralPage() {
                     onBlur={() =>
                       setTimeout(() => setShowClienteSuggestions(false), 200)
                     }
-                    placeholder="Buscar cliente..."
+                    placeholder={
+                      !editableFields.idEmpresa
+                        ? "Seleccione una empresa primero..."
+                        : loadingClientes
+                          ? "Cargando clientes..."
+                          : "Buscar cliente..."
+                    }
+                    disabled={!editableFields.idEmpresa}
                     style={{ paddingRight: "40px" }}
                   />
 
-                  {showClienteSuggestions && (
+                  {showClienteSuggestions && editableFields.idEmpresa && (
                     <div
                       style={{
                         position: "absolute",
@@ -1064,61 +1180,36 @@ export function GeneralPage() {
                         maxHeight: "250px",
                         overflowY: "auto",
                         zIndex: 1000,
-                        listStyle: "none",
-                        padding: 0,
-                        margin: 0,
                         boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                       }}
                     >
                       {filteredClientes.length > 0 ? (
-                        <>
-                          {filteredClientes.map((cliente) => (
-                            <div
-                              key={cliente.id}
-                              onClick={() => {
-                                handleInputChange("idUsuario", cliente.id);
-                                handleInputChange(
-                                  "usuarioNombre",
-                                  cliente.nombreCompleto
-                                );
-                                setShowClienteSuggestions(false);
-                              }}
-                              style={{
-                                padding: "8px 12px",
-                                cursor: "pointer",
-                                borderBottom: "1px solid #eee",
-                              }}
-                              onMouseEnter={(e) =>
-                                (e.target.style.backgroundColor = "#f0f0f0")
-                              }
-                              onMouseLeave={(e) =>
-                                (e.target.style.backgroundColor = "white")
-                              }
-                            >
-                              {cliente.nombreCompleto}
-                            </div>
-                          ))}
-
-                          {clientesHasMore && (
-                            <div
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={loadMoreClientes}
-                              style={{
-                                padding: "10px 12px",
-                                cursor: "pointer",
-                                backgroundColor: "#f8f9fa",
-                                textAlign: "center",
-                                fontWeight: "bold",
-                                color: "#007bff",
-                                borderTop: "2px solid #dee2e6",
-                              }}
-                            >
-                              {loadingClientes
-                                ? "Cargando..."
-                                : "⬇️ Cargar más clientes"}
-                            </div>
-                          )}
-                        </>
+                        filteredClientes.map((cliente) => (
+                          <div
+                            key={cliente.id}
+                            onClick={() => {
+                              handleInputChange("idUsuario", cliente.id);
+                              handleInputChange(
+                                "usuarioNombre",
+                                cliente.nombreCompleto
+                              );
+                              setShowClienteSuggestions(false);
+                            }}
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #eee",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#f0f0f0")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "white")
+                            }
+                          >
+                            {cliente.nombreCompleto}
+                          </div>
+                        ))
                       ) : (
                         <div
                           style={{
@@ -1127,7 +1218,9 @@ export function GeneralPage() {
                             textAlign: "center",
                           }}
                         >
-                          No se encontraron clientes
+                          {loadingClientes
+                            ? "Cargando..."
+                            : "No se encontraron clientes"}
                         </div>
                       )}
                     </div>
@@ -1138,9 +1231,7 @@ export function GeneralPage() {
                   type="text"
                   value={
                     req.usuario
-                      ? `${req.usuario.nombres || ""} ${
-                          req.usuario.apepaterno || ""
-                        } ${req.usuario.apematerno || ""}`.trim()
+                      ? `${req.usuario.nombres || ""} ${req.usuario.apepaterno || ""} ${req.usuario.apematerno || ""}`.trim()
                       : "-"
                   }
                   className="w-100"
@@ -1150,7 +1241,7 @@ export function GeneralPage() {
             </div>
           </div>
 
-          {/* ========== ACTIVIDAD ========== */}
+          {/* ========== FECHA DE INICIO (DATEPICKER) ========== */}
           <div className="detalle__body__col--uno">
             <label>Fecha de inicio</label>
             <div>
@@ -1174,6 +1265,7 @@ export function GeneralPage() {
             </div>
           </div>
 
+          {/* ========== FECHA FINAL (DATEPICKER) ========== */}
           <div className="detalle__body__col--uno">
             <label>Fecha final</label>
             <div>
@@ -1197,29 +1289,37 @@ export function GeneralPage() {
             </div>
           </div>
 
+          {/* ========== MONEDA (AUTOMÁTICA) ========== */}
           <div className="detalle__body__col--uno">
             <label>Moneda</label>
             <div>
               <input
                 type="text"
-                value={req.empresa?.moneda?.descripcion || "-"}
+                value={
+                  isEditing
+                    ? loadingMoneda
+                      ? "Cargando moneda..."
+                      : editableFields.monedaDescripcion ||
+                        "Seleccione una empresa"
+                    : req.empresa?.moneda?.descripcion || "-"
+                }
                 className="w-100"
                 readOnly
+                style={{ cursor: "not-allowed", backgroundColor: "#f5f5f5" }}
               />
             </div>
           </div>
 
+          {/* ========== COSTO ========== */}
           <div className="detalle__body__col--uno">
             <label>Costo</label>
             <div>
               {isEditing ? (
                 <input
-                  type="number"
+                  type="text"
                   className="w-100"
                   value={editableFields.costo}
                   onChange={(e) => handleInputChange("costo", e.target.value)}
-                  step="0.01"
-                  min="0"
                 />
               ) : (
                 <input
@@ -1232,19 +1332,18 @@ export function GeneralPage() {
             </div>
           </div>
 
+          {/* ========== HORAS ========== */}
           <div className="detalle__body__col--uno">
             <label>Horas</label>
             <div>
               {isEditing ? (
                 <input
-                  type="number"
+                  type="text"
                   className="w-100"
                   value={editableFields.tiemporegular}
                   onChange={(e) =>
                     handleInputChange("tiemporegular", e.target.value)
                   }
-                  step="0.1"
-                  min="0"
                 />
               ) : (
                 <input
@@ -1257,6 +1356,7 @@ export function GeneralPage() {
             </div>
           </div>
 
+          {/* ========== DETALLE ASIGNACIÓN ========== */}
           <div className="detalle__body__col--uno">
             <label>Detalle Asignación</label>
             <div>
@@ -1280,6 +1380,7 @@ export function GeneralPage() {
             </div>
           </div>
 
+          {/* ========== DESCRIPCIÓN ESTIMACIÓN ========== */}
           <div className="detalle__body__col--uno">
             <label>Descripción Estimación</label>
             <div>
@@ -1291,6 +1392,7 @@ export function GeneralPage() {
                   onChange={(e) =>
                     handleInputChange("descripcionEstimacion", e.target.value)
                   }
+                  disabled
                 />
               ) : (
                 <input
@@ -1303,20 +1405,19 @@ export function GeneralPage() {
             </div>
           </div>
 
+          {/* ========== AVANCE ========== */}
           <div className="detalle__body__col--uno">
             <label>Avance (%)</label>
             <div>
               {isEditing ? (
                 <input
-                  type="number"
+                  type="text"
                   className="w-100"
                   value={editableFields.porcentajeAvance}
                   onChange={(e) =>
                     handleInputChange("porcentajeAvance", e.target.value)
                   }
-                  step="0.1"
-                  min="0"
-                  max="100"
+                  disabled
                 />
               ) : (
                 <input
@@ -1329,7 +1430,27 @@ export function GeneralPage() {
             </div>
           </div>
 
-          {/* Botones de acción */}
+          {/* ========== PAÍS (AUTOMÁTICO) 🔥 ========== */}
+          <div className="detalle__body__col--uno">
+            <label>País</label>
+            <div>
+              <input
+                type="text"
+                value={
+                  isEditing
+                    ? loadingPais
+                      ? "Cargando país..."
+                      : editableFields.paisNombre || "Seleccione una empresa"
+                    : req?.paisNombre?.nombre || "-"
+                }
+                className="w-100"
+                readOnly
+                style={{ cursor: "not-allowed", backgroundColor: "#f5f5f5" }}
+              />
+            </div>
+          </div>
+
+          {/* ========== BOTONES DE ACCIÓN ========== */}
           <div className="text-center block-center">
             {!isEditing && (
               <button
