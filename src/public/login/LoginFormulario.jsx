@@ -281,13 +281,13 @@ export function LoginFormulario({
         </Link>
       </section>
 
-      {mostrarRegistrarse && (
+      {/* {mostrarRegistrarse && (
         <section className={validarclaseRegistrarse}>
           <Link to={linkToRegister} className={linkclassName}>
             {linkTextRegister}
           </Link>
         </section>
-      )}
+      )} */}
 
       <section
         className={`${buttonclassName} ${isRegister ? "button-register-section" : ""}`}
