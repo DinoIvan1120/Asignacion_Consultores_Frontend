@@ -9,6 +9,7 @@ export const handleClearFiltersAsignaciones = async ({
   setStartDate,
   setEndDate,
   setClienteFilter,
+  setOrderNumberFilter,
   setConsultorFilter,
   // Funciones para actualizar asignaciones
   setAsignaciones,
@@ -29,6 +30,7 @@ export const handleClearFiltersAsignaciones = async ({
     setStartDate(null);
     setEndDate(null);
     setClienteFilter("");
+    setOrderNumberFilter("");
     setConsultorFilter("");
 
     console.log("✅ Filtros limpiados");

@@ -38,6 +38,10 @@ export async function FiltrarAsignaciones(filtros, token, page = 0, size = 10) {
       params.nombreConsultor = filtros.nombreConsultor;
     }
 
+    if (filtros.nombrecomercial) {
+      params.nombrecomercial = filtros.nombrecomercial;
+    }
+
     console.log("📤 Filtros enviados al backend:", params);
 
     const response = await axios.get(`${API}/asignaciones/search`, {

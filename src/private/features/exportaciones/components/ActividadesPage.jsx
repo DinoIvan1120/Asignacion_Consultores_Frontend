@@ -20,6 +20,7 @@ import { SearchClientesByNombre } from "../../../../services/asignaciones/Client
 import { FindAllConsultoresActivos } from "../../../../services/asignaciones/Consultores.js";
 import { SearchConsultoresByNombre } from "../../../../services/asignaciones/Consultores.js";
 import { FiltrarAsignaciones } from "../../../../services/detalleasignaciones/filtrarasignaciones.js";
+import { FindAllNameCompany } from "../../../../services/asignaciones/Empresa.js";
 
 // 🔥 IMPORTAR HOOKS DE PROCESAMIENTO
 import { handleApplyFilterClickAsignaciones } from "../../../../hooks/exportaciones/PedidosPage/FiltrarAsignacionesProcess.js";
@@ -76,6 +77,52 @@ export function ActividadesPage() {
     useState(false);
   const [isSearchingConsultores, setIsSearchingConsultores] = useState(false);
 
+  //===================
+
+  const [orderNumberFilter, setOrderNumberFilter] = useState("");
+
+  const [showRazonSocialSuggestions, setShowRazonSocialSuggestions] =
+    useState(false);
+
+  const [loadingEmpresas, setLoadingEmpresas] = useState(false);
+  const [razonesSociales, setRazonesSociales] = useState([]);
+
+  const [empresasCompletas, setEmpresasCompletas] = useState([]); // Guardar empresas con ID
+
+  //Nuevo Filtrar
+  useEffect(() => {
+    const loadNombresComerciales = async () => {
+      if (!accessToken) return;
+
+      try {
+        setLoadingEmpresas(true);
+        const response = await FindAllNameCompany(accessToken);
+
+        // ✅ Guardar empresas completas (con ID y nombre)
+        setEmpresasCompletas(response);
+
+        // Guardar solo nombres para el autocomplete
+        const nombres = response.map((empresa) => empresa.nombrecomercial);
+        setRazonesSociales(nombres);
+
+        console.log("Empresas completas cargadas:", response);
+      } catch (error) {
+        console.error("Error al cargar nombres comerciales:", error);
+        setRazonesSociales([]);
+        setEmpresasCompletas([]);
+      } finally {
+        setLoadingEmpresas(false);
+      }
+    };
+
+    loadNombresComerciales();
+  }, [accessToken]);
+
+  // Funciones de filtrado para autocompletado
+  const filteredRazonesSociales = razonesSociales.filter((razon) =>
+    razon.toLowerCase().includes(orderNumberFilter.toLowerCase())
+  );
+
   // ============================================
   // ESTADOS PARA MODALES
   // ============================================
@@ -102,6 +149,10 @@ export function ActividadesPage() {
     [maxDate]
   );
 
+  // ⬇️ FUNCIÓN PARA MANEJAR EL CLICK EN EL BOTÓN DESPLEGABLE
+  const handleDropdownClick = () => {
+    setShowRazonSocialSuggestions(!showRazonSocialSuggestions);
+  };
   // ============================================
   // CARGAR ASIGNACIONES INICIAL
   // ============================================
@@ -397,6 +448,10 @@ export function ActividadesPage() {
         filtros.nombreConsultor = consultorFilter.trim();
       }
 
+      if (orderNumberFilter && orderNumberFilter.trim() !== "") {
+        filtros.nombrecomercial = orderNumberFilter.trim();
+      }
+
       // ✅ SIEMPRE llamar al endpoint de filtrado
       const response = await FiltrarAsignaciones(
         filtros,
@@ -560,6 +615,7 @@ export function ActividadesPage() {
       setStartDate,
       setEndDate,
       setClienteFilter,
+      setOrderNumberFilter,
       setConsultorFilter,
       setAsignaciones,
       setAsignacionesPage,
@@ -758,39 +814,41 @@ export function ActividadesPage() {
                   className="custom-datepicker"
                 />
               </div>
-
-              {/* 🔥 CLIENTE CON AUTOCOMPLETADO */}
+              {/* 🔥 NOMBRE COMERCIAL CON AUTOCOMPLETADO */}
               <div
                 className="bodyFeature__searching__col"
                 style={{ position: "relative" }}
               >
-                <label>Cliente</label>
+                <label>Nombre comercial</label>
                 <div style={{ position: "relative", display: "flex" }}>
                   <input
                     type="text"
                     className="w-100"
-                    value={clienteFilter}
+                    value={orderNumberFilter}
                     onChange={(e) => {
-                      setClienteFilter(e.target.value);
-                      setShowClienteSuggestions(true);
+                      setOrderNumberFilter(e.target.value);
+                      setShowRazonSocialSuggestions(true);
                     }}
-                    onFocus={() => setShowClienteSuggestions(true)}
+                    onFocus={() => setShowRazonSocialSuggestions(true)}
                     onBlur={() =>
-                      setTimeout(() => setShowClienteSuggestions(false), 200)
+                      setTimeout(
+                        () => setShowRazonSocialSuggestions(false),
+                        200
+                      )
                     }
                     placeholder={
-                      loadingClientes
-                        ? "Cargando clientes..."
-                        : "Buscar cliente..."
+                      loadingEmpresas
+                        ? "Cargando empresas..."
+                        : "Buscar nombre comercial..."
                     }
+                    //disabled={loadingEmpresas}
                     style={{ paddingRight: "40px" }}
                   />
-                  {/* Botón desplegable */}
+                  {/* ⬇️ BOTÓN DESPLEGABLE */}
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowClienteSuggestions(!showClienteSuggestions)
-                    }
+                    onClick={handleDropdownClick}
+                    //disabled={loadingEmpresas}
                     style={{
                       position: "absolute",
                       right: "5px",
@@ -798,23 +856,23 @@ export function ActividadesPage() {
                       transform: "translateY(-50%)",
                       background: "transparent",
                       border: "none",
-                      cursor: loadingClientes ? "not-allowed" : "pointer",
+                      cursor: loadingEmpresas ? "not-allowed" : "pointer",
                       padding: "5px 10px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: loadingClientes ? "#ccc" : "#666",
+                      color: loadingEmpresas ? "#ccc" : "#666",
                     }}
                     onMouseEnter={(e) => {
-                      if (!loadingClientes) e.target.style.color = "#333";
+                      if (!loadingEmpresas) e.target.style.color = "#333";
                     }}
                     onMouseLeave={(e) => {
-                      if (!loadingClientes) e.target.style.color = "#666";
+                      if (!loadingEmpresas) e.target.style.color = "#666";
                     }}
                   >
                     <i
                       className={`bi ${
-                        showClienteSuggestions
+                        showRazonSocialSuggestions
                           ? "bi-chevron-up"
                           : "bi-chevron-down"
                       }`}
@@ -823,9 +881,9 @@ export function ActividadesPage() {
                   </button>
                 </div>
 
-                {/* Lista desplegable */}
-                {showClienteSuggestions && (
-                  <div
+                {/* ⬇️ LISTA DESPLEGABLE */}
+                {showRazonSocialSuggestions && !loadingEmpresas && (
+                  <ul
                     style={{
                       position: "absolute",
                       top: "55%",
@@ -834,23 +892,23 @@ export function ActividadesPage() {
                       backgroundColor: "white",
                       border: "1px solid #ccc",
                       borderRadius: "4px",
-                      maxHeight: "250px",
+                      maxHeight: "200px",
                       overflowY: "auto",
-                      zIndex: 1000,
+                      zIndex: 2,
                       listStyle: "none",
                       padding: 0,
                       margin: 0,
                       boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                     }}
-                    onMouseDown={(e) => e.preventDefault()}
                   >
-                    {clienteFilter && filteredClientesDropdown.length > 0 ? (
-                      filteredClientesDropdown.map((cliente) => (
-                        <div
-                          key={cliente.id}
+                    {/* Si hay filtro de búsqueda, mostrar resultados filtrados */}
+                    {orderNumberFilter && filteredRazonesSociales.length > 0 ? (
+                      filteredRazonesSociales.map((razon, index) => (
+                        <li
+                          key={index}
                           onClick={() => {
-                            setClienteFilter(cliente.nombreCompleto);
-                            setShowClienteSuggestions(false);
+                            setOrderNumberFilter(razon);
+                            setShowRazonSocialSuggestions(false);
                           }}
                           style={{
                             padding: "8px 12px",
@@ -864,76 +922,46 @@ export function ActividadesPage() {
                             (e.target.style.backgroundColor = "white")
                           }
                         >
-                          {cliente.nombreCompleto}
-                        </div>
+                          {razon}
+                        </li>
                       ))
-                    ) : clienteFilter &&
-                      filteredClientesDropdown.length === 0 ? (
-                      <div
+                    ) : orderNumberFilter &&
+                      filteredRazonesSociales.length === 0 ? (
+                      <li
                         style={{
                           padding: "8px 12px",
                           color: "#999",
                           textAlign: "center",
                         }}
                       >
-                        {isSearchingClientes
-                          ? "Buscando..."
-                          : "No se encontraron clientes"}
-                      </div>
+                        No se encontraron empresas
+                      </li>
                     ) : (
-                      <>
-                        {clientes.map((cliente) => (
-                          <div
-                            key={cliente.id}
-                            onClick={() => {
-                              setClienteFilter(cliente.nombreCompleto);
-                              setShowClienteSuggestions(false);
-                            }}
-                            style={{
-                              padding: "8px 12px",
-                              cursor: "pointer",
-                              borderBottom: "1px solid #eee",
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.target.style.backgroundColor = "#f0f0f0")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.target.style.backgroundColor = "white")
-                            }
-                          >
-                            {cliente.nombreCompleto}
-                          </div>
-                        ))}
-
-                        {/* Botón "Cargar más" */}
-                        {clientesHasMore && (
-                          <div
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={loadMoreClientes}
-                            style={{
-                              padding: "10px 12px",
-                              cursor: "pointer",
-                              backgroundColor: "#f8f9fa",
-                              textAlign: "center",
-                              fontWeight: "bold",
-                              color: "#007bff",
-                              borderTop: "2px solid #dee2e6",
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.target.style.backgroundColor = "#e9ecef")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.target.style.backgroundColor = "#f8f9fa")
-                            }
-                          >
-                            {loadingClientes
-                              ? "Cargando..."
-                              : "⬇️ Cargar más clientes"}
-                          </div>
-                        )}
-                      </>
+                      /* Si no hay filtro, mostrar TODAS las opciones */
+                      razonesSociales.map((razon, index) => (
+                        <li
+                          key={index}
+                          onClick={() => {
+                            setOrderNumberFilter(razon);
+                            setShowRazonSocialSuggestions(false);
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.backgroundColor = "#f0f0f0")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.backgroundColor = "white")
+                          }
+                        >
+                          {razon}
+                        </li>
+                      ))
                     )}
-                  </div>
+                  </ul>
                 )}
               </div>
 
@@ -1190,11 +1218,11 @@ export function ActividadesPage() {
             >
               <tr>
                 <th className="thead">Posición</th>
-                <th className="thead">Fecha de creación</th>
+                <th className="thead">Fecha de actividad</th>
                 <th className="thead">Fecha inicio</th>
                 <th className="thead">Fecha final</th>
                 <th className="thead">Consultor</th>
-                <th className="thead">Cliente</th>
+                <th className="thead">Nombre comercial</th>
                 <th className="thead theadPosition">Detalle de actividad</th>
               </tr>
             </thead>
@@ -1234,6 +1262,9 @@ export function ActividadesPage() {
                       <td>{fila.fechaFinal}</td>
                       <td>{fila.consultorNombre}</td>
                       <td>
+                        {fila.requerimiento?.empresa?.nombrecomercial ?? "-"}
+                      </td>
+                      {/* <td>
                         {fila.requerimiento.usuario
                           ? `${fila.requerimiento.usuario.nombres ?? ""} ${
                               fila.requerimiento.usuario.apepaterno ?? ""
@@ -1241,7 +1272,7 @@ export function ActividadesPage() {
                               fila.requerimiento.usuario.apematerno ?? ""
                             }`.trim()
                           : "-"}
-                      </td>
+                      </td> */}
                       <td className="tbodyPosition">
                         {fila.actividad
                           ? fila.actividad.descripcion || "-"

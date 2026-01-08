@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { faTimes, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../../../styles/exportaciones/PedidosPage/CrearFicha.css";
 import {
   FindAllConsultoresActivos,
@@ -162,6 +162,53 @@ export function CrearFichaModal({
     loadConsultores();
   }, [accessToken]);
 
+  // Función para calcular días hábiles entre dos fechas
+  const calcularDiasHabiles = (fechaInicio, fechaFin) => {
+    if (!fechaInicio || !fechaFin) return 0;
+
+    const inicio = new Date(fechaInicio + "T00:00:00");
+    const fin = new Date(fechaFin + "T00:00:00");
+
+    // Si la fecha de fin es menor que la de inicio, retornar 0
+    if (fin < inicio) return 0;
+
+    let diasHabiles = 0;
+    const fechaActual = new Date(inicio);
+
+    // Iterar día por día
+    while (fechaActual <= fin) {
+      const diaSemana = fechaActual.getDay();
+      // 0 = Domingo, 6 = Sábado
+      if (diaSemana !== 0 && diaSemana !== 6) {
+        diasHabiles++;
+      }
+      fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+
+    return diasHabiles;
+  };
+
+  // Calcular horas automáticamente cuando cambien las fechas
+  useEffect(() => {
+    if (fechaInicialValue && fechaFinalValue) {
+      const diasHabiles = calcularDiasHabiles(
+        fechaInicialValue,
+        fechaFinalValue
+      );
+      const horasCalculadas = diasHabiles * 8;
+
+      // Solo establecer el valor si hay días hábiles
+      if (diasHabiles > 0) {
+        setHoraValue(horasCalculadas.toString());
+        console.log(
+          `Días hábiles: ${diasHabiles}, Horas calculadas: ${horasCalculadas}`
+        );
+      } else {
+        setHoraValue("");
+      }
+    }
+  }, [fechaInicialValue, fechaFinalValue]);
+
   // Búsqueda de consultores con debounce
   useEffect(() => {
     const searchConsultores = async () => {
@@ -249,6 +296,32 @@ export function CrearFichaModal({
 
     loadTiposActividad();
   }, [accessToken]);
+
+  // Agregar este ref al inicio con los otros estados
+  const actividadInicializada = useRef(false);
+
+  // Establecer "Análisis Funcional" como actividad por defecto SOLO al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      // Cuando se abre el modal, marcar como no inicializada
+      actividadInicializada.current = false;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && tiposActividad.length > 0 && !actividadInicializada.current) {
+      const analisisFuncional = tiposActividad.find(
+        (actividad) => actividad.descripcion === "Análisis Funcional"
+      );
+
+      if (analisisFuncional) {
+        setActividadFilter(analisisFuncional.descripcion);
+        setActividadSeleccionadaId(analisisFuncional.id);
+        actividadInicializada.current = true; // Marcar como inicializada
+        console.log("Actividad por defecto establecida:", analisisFuncional);
+      }
+    }
+  }, [isOpen, tiposActividad]);
 
   // Cargar monedas
   // useEffect(() => {
@@ -357,10 +430,61 @@ export function CrearFichaModal({
   );
 
   // Cargar clientes por empresa
+  // useEffect(() => {
+  //   const loadClientesPorEmpresa = async () => {
+  //     if (!accessToken || !empresaSeleccionadaId) {
+  //       setClientesPorEmpresa([]);
+  //       return;
+  //     }
+
+  //     try {
+  //       setLoadingClientes(true);
+  //       console.log(
+  //         "Cargando clientes para empresa ID:",
+  //         empresaSeleccionadaId
+  //       );
+
+  //       const response = await FindClientesByEmpresa(
+  //         accessToken,
+  //         empresaSeleccionadaId
+  //       );
+
+  //       const clientesFormateados = response.map((cliente) => ({
+  //         id: cliente.idUsuario,
+  //         nombreCompleto: cliente.nombreCompleto || "-",
+  //       }));
+
+  //       setClientesPorEmpresa(clientesFormateados);
+  //       console.log("Clientes cargados:", clientesFormateados);
+  //     } catch (error) {
+  //       console.error("Error al cargar clientes por empresa:", error);
+  //       setClientesPorEmpresa([]);
+  //     } finally {
+  //       setLoadingClientes(false);
+  //     }
+  //   };
+
+  //   loadClientesPorEmpresa();
+  // }, [accessToken, empresaSeleccionadaId]);
+
+  // Agregar este ref junto con el de actividadInicializada
+  const contactoInicializado = useRef(false);
+
+  // Resetear el flag cuando se selecciona una nueva empresa
+  useEffect(() => {
+    if (empresaSeleccionadaId) {
+      contactoInicializado.current = false;
+    }
+  }, [empresaSeleccionadaId]);
+
+  // Cargar clientes por empresa y seleccionar el primero automáticamente
   useEffect(() => {
     const loadClientesPorEmpresa = async () => {
       if (!accessToken || !empresaSeleccionadaId) {
         setClientesPorEmpresa([]);
+        // 🔥 Limpiar contacto cuando no hay empresa seleccionada
+        setContactoValue("");
+        setContactoSeleccionadoId(null);
         return;
       }
 
@@ -383,9 +507,29 @@ export function CrearFichaModal({
 
         setClientesPorEmpresa(clientesFormateados);
         console.log("Clientes cargados:", clientesFormateados);
+
+        // 🔥 SELECCIONAR AUTOMÁTICAMENTE EL PRIMER CLIENTE SI EXISTE
+        if (clientesFormateados.length > 0 && !contactoInicializado.current) {
+          const primerCliente = clientesFormateados[0];
+          setContactoValue(primerCliente.nombreCompleto);
+          setContactoSeleccionadoId(primerCliente.id);
+          contactoInicializado.current = true;
+          console.log(
+            "Primer cliente seleccionado automáticamente:",
+            primerCliente
+          );
+        } else if (clientesFormateados.length === 0) {
+          // 🔥 Si no hay clientes, limpiar los campos
+          setContactoValue("");
+          setContactoSeleccionadoId(null);
+          console.log("No hay clientes para esta empresa");
+        }
       } catch (error) {
         console.error("Error al cargar clientes por empresa:", error);
         setClientesPorEmpresa([]);
+        // 🔥 Limpiar contacto en caso de error
+        setContactoValue("");
+        setContactoSeleccionadoId(null);
       } finally {
         setLoadingClientes(false);
       }
@@ -562,6 +706,10 @@ export function CrearFichaModal({
     setSubfrenteSeleccionadoId(null);
     setContactoSeleccionadoId(null);
     setEmpresaSeleccionadaId(null);
+
+    // 🔥 Resetear flags de inicialización
+    actividadInicializada.current = false;
+    contactoInicializado.current = false;
 
     setErrorMessage("");
   };
@@ -1303,7 +1451,7 @@ export function CrearFichaModal({
 
             {/* Detalle */}
             <div className="form-grouppp">
-              <label htmlFor="detalle">Detalle *</label>
+              <label htmlFor="detalle">Detalle</label>
               <input
                 className="h"
                 type="text"
@@ -1319,7 +1467,7 @@ export function CrearFichaModal({
           <div className="form-rows">
             {/* Subfrente */}
             <div className="form-grouppp" style={{ position: "relative" }}>
-              <label htmlFor="subfrente">Subfrente *</label>
+              <label htmlFor="subfrente">Subfrente</label>
               <div style={{ position: "relative", display: "flex" }}>
                 <input
                   className="h"
@@ -1472,7 +1620,7 @@ export function CrearFichaModal({
 
             {/* Gerencia */}
             <div className="form-grouppp">
-              <label htmlFor="gerencia">Gerencia comercial *</label>
+              <label htmlFor="gerencia">Gerencia comercial</label>
               <input
                 className="h"
                 type="text"

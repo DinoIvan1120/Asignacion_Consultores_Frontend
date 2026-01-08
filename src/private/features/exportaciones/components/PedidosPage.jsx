@@ -1625,7 +1625,7 @@ export function PedidosPage() {
                 />
               </div>
 
-              <div
+              {/* <div
                 className="bodyFeature__searching__col"
                 style={{ position: "relative" }}
               >
@@ -1648,16 +1648,16 @@ export function PedidosPage() {
                         ? "Cargando clientes..."
                         : "Buscar cliente..."
                     }
-                    //disabled={loadingClientes}
+                    
                     style={{ paddingRight: "40px" }}
                   />
-                  {/* Botón desplegable */}
+                 
                   <button
                     type="button"
                     onClick={() =>
                       setShowClienteSuggestions(!showClienteSuggestions)
                     }
-                    //disabled={loadingClientes}
+                   
                     style={{
                       position: "absolute",
                       right: "5px",
@@ -1690,7 +1690,7 @@ export function PedidosPage() {
                   </button>
                 </div>
 
-                {/* Lista desplegable con scroll y paginación */}
+                
                 {showClienteSuggestions && (
                   <div
                     style={{
@@ -1711,7 +1711,7 @@ export function PedidosPage() {
                     }}
                     onMouseDown={(e) => e.preventDefault()}
                   >
-                    {/* Si hay filtro de búsqueda, mostrar resultados filtrados */}
+              
                     {clienteFilter && filteredClientesDropdown.length > 0 ? (
                       filteredClientesDropdown.map((cliente) => (
                         <div
@@ -1747,7 +1747,7 @@ export function PedidosPage() {
                         No se encontraron clientes
                       </div>
                     ) : (
-                      /* Si no hay filtro, mostrar TODAS las opciones */
+          
                       <>
                         {clientes.map((cliente) => (
                           <div
@@ -1772,10 +1772,9 @@ export function PedidosPage() {
                           </div>
                         ))}
 
-                        {/* Botón "Cargar más" si hay más páginas */}
                         {clientesHasMore && (
                           <div
-                            onMouseDown={(e) => e.preventDefault()} // <-- EVITA CIERRE
+                            onMouseDown={(e) => e.preventDefault()}
                             onClick={loadMoreClientes}
                             style={{
                               padding: "10px 12px",
@@ -1802,11 +1801,11 @@ export function PedidosPage() {
                     )}
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Número de Tickets con autocompletado */}
               {/* ID Requerimiento con autocompletado */}
-              <div
+              {/* <div
                 className="bodyFeature__searching__col"
                 style={{ position: "relative" }}
               >
@@ -1835,11 +1834,11 @@ export function PedidosPage() {
                         ? "Cargando IDs..."
                         : "Buscar numero de Tickets..."
                     }
-                    //disabled={loadingIdCodigoRequerimiento}
+                    
                     style={{ paddingRight: "40px" }}
                   />
 
-                  {/* Botón desplegable */}
+              
                   <button
                     type="button"
                     onClick={() =>
@@ -1847,7 +1846,7 @@ export function PedidosPage() {
                         !showIdCodigoRequerimientoSuggestions
                       )
                     }
-                    //disabled={loadingIdCodigoRequerimiento}
+                   
                     style={{
                       position: "absolute",
                       right: "5px",
@@ -1884,7 +1883,7 @@ export function PedidosPage() {
                   </button>
                 </div>
 
-                {/* Lista desplegable */}
+             
                 {showIdCodigoRequerimientoSuggestions && (
                   <div
                     style={{
@@ -1905,7 +1904,7 @@ export function PedidosPage() {
                     }}
                     onMouseDown={(e) => e.preventDefault()}
                   >
-                    {/* Si hay filtro de búsqueda */}
+                    
                     {idCodigoFilter &&
                     filteredIdCodigosRequerimiento.length > 0 ? (
                       filteredIdCodigosRequerimiento.map((codigo, index) => (
@@ -1943,7 +1942,7 @@ export function PedidosPage() {
                       </div>
                     ) : (
                       <>
-                        {/* Mostrar todos los IDs */}
+                       
                         {idcodigosRequerimiento.map((codigo, index) => (
                           <div
                             key={index}
@@ -1967,7 +1966,7 @@ export function PedidosPage() {
                           </div>
                         ))}
 
-                        {/* Botón cargar más */}
+                       
                         {idCodigoRequerimientoHasMore && (
                           <div
                             onMouseDown={(e) => e.preventDefault()}
@@ -1997,7 +1996,7 @@ export function PedidosPage() {
                     )}
                   </div>
                 )}
-              </div>
+              </div> */}
 
               <div
                 className="bodyFeature__searching__col"
@@ -2418,7 +2417,7 @@ export function PedidosPage() {
                 <th className="thead">Código requerimiento</th>
                 <th className="thead">ID</th>
                 <th className="thead">Consultor</th>
-                <th className="thead">Cliente</th>
+                {/* <th className="thead">Cliente</th> */}
                 <th className="thead">Estado requerimiento</th>
                 <th className="thead">Fecha inicio</th>
                 <th className="thead">Fecha final</th>
@@ -2458,14 +2457,18 @@ export function PedidosPage() {
                         <td>{index + 1}</td>
 
                         <td>
-                          <strong>{formatFecha(req.fechaRegistro)}</strong>
+                          <strong>
+                            {act?.fechainicio
+                              ? formatFecha(act.fechainicio)
+                              : formatFecha(req.fechaRegistro)}
+                          </strong>
                         </td>
 
                         <td>{req?.empresa?.nombrecomercial ?? "-"}</td>
 
                         <td>{req.codRequerimiento || "-"}</td>
 
-                        <td>{req.idRequerimiento}</td>
+                        <td>{act?.idusuario || "-"}</td>
 
                         <td>{extraerNombreConsultor(req.titulo) || "-"}</td>
 
@@ -2475,11 +2478,11 @@ export function PedidosPage() {
                             : "-"}
                         </td> */}
 
-                        <td>
+                        {/* <td>
                           {req.usuario
                             ? `${req.usuario.nombres ?? ""} ${req.usuario.apepaterno ?? ""} ${req.usuario.apematerno ?? ""}`.trim()
                             : "-"}
-                        </td>
+                        </td> */}
 
                         <td>{req?.estadoRequerimiento?.descripcion ?? "-"}</td>
 
