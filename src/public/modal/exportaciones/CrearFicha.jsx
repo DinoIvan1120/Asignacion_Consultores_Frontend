@@ -193,7 +193,7 @@ export function CrearFichaModal({
     if (fechaInicialValue && fechaFinalValue) {
       const diasHabiles = calcularDiasHabiles(
         fechaInicialValue,
-        fechaFinalValue
+        fechaFinalValue,
       );
       const horasCalculadas = diasHabiles * 8;
 
@@ -201,7 +201,7 @@ export function CrearFichaModal({
       if (diasHabiles > 0) {
         setHoraValue(horasCalculadas.toString());
         console.log(
-          `Días hábiles: ${diasHabiles}, Horas calculadas: ${horasCalculadas}`
+          `Días hábiles: ${diasHabiles}, Horas calculadas: ${horasCalculadas}`,
         );
       } else {
         setHoraValue("");
@@ -246,7 +246,7 @@ export function CrearFichaModal({
           accessToken,
           consultorFilterFicha.trim(),
           0,
-          20
+          20,
         );
 
         const consultoresData = response.content.map((consultor) => ({
@@ -311,7 +311,7 @@ export function CrearFichaModal({
   useEffect(() => {
     if (isOpen && tiposActividad.length > 0 && !actividadInicializada.current) {
       const analisisFuncional = tiposActividad.find(
-        (actividad) => actividad.descripcion === "Análisis Funcional"
+        (actividad) => actividad.descripcion === "Análisis Funcional",
       );
 
       if (analisisFuncional) {
@@ -353,7 +353,7 @@ export function CrearFichaModal({
         setLoadingMonedas(true);
         const response = await FindMonedaByEmpresa(
           accessToken,
-          empresaSeleccionadaId
+          empresaSeleccionadaId,
         );
         setMonedaId(response.idmoneda);
         setMonedaDescripcion(response.descripcion); // Asumimos que response es un objeto moneda
@@ -400,7 +400,7 @@ export function CrearFichaModal({
       const response = await FindAllConsultoresActivos(
         accessToken,
         nextPage,
-        20
+        20,
       );
 
       const nuevosConsultores = response.content.map((consultor) => ({
@@ -426,7 +426,7 @@ export function CrearFichaModal({
   const filteredConsultores = consultoresFicha.filter((consultor) =>
     consultor.nombreCompleto
       .toLowerCase()
-      .includes(consultorFilterFicha.toLowerCase())
+      .includes(consultorFilterFicha.toLowerCase()),
   );
 
   // Cargar clientes por empresa
@@ -492,12 +492,12 @@ export function CrearFichaModal({
         setLoadingClientes(true);
         console.log(
           "Cargando clientes para empresa ID:",
-          empresaSeleccionadaId
+          empresaSeleccionadaId,
         );
 
         const response = await FindClientesByEmpresa(
           accessToken,
-          empresaSeleccionadaId
+          empresaSeleccionadaId,
         );
 
         const clientesFormateados = response.map((cliente) => ({
@@ -516,7 +516,7 @@ export function CrearFichaModal({
           contactoInicializado.current = true;
           console.log(
             "Primer cliente seleccionado automáticamente:",
-            primerCliente
+            primerCliente,
           );
         } else if (clientesFormateados.length === 0) {
           // 🔥 Si no hay clientes, limpiar los campos
@@ -544,7 +544,7 @@ export function CrearFichaModal({
     setShowEmpresaSuggestions(false);
 
     const empresaEncontrada = empresasCompletas.find(
-      (emp) => emp.nombrecomercial === nombreEmpresa
+      (emp) => emp.nombrecomercial === nombreEmpresa,
     );
 
     if (empresaEncontrada) {
@@ -557,27 +557,27 @@ export function CrearFichaModal({
 
   // Filtrar razones sociales
   const filteredRazonesSociales = razonesSociales.filter((razon) =>
-    razon.toLowerCase().includes(empresaValue.toLowerCase())
+    razon.toLowerCase().includes(empresaValue.toLowerCase()),
   );
 
   // Filtrar clientes
   const filteredClientesEmpresa = clientesPorEmpresa.filter((cliente) =>
-    cliente.nombreCompleto.toLowerCase().includes(contactoValue.toLowerCase())
+    cliente.nombreCompleto.toLowerCase().includes(contactoValue.toLowerCase()),
   );
 
   // Filtrar actividades
   const filteredActividades = tiposActividad.filter((actividad) =>
-    actividad.descripcion.toLowerCase().includes(actividadFilter.toLowerCase())
+    actividad.descripcion.toLowerCase().includes(actividadFilter.toLowerCase()),
   );
 
   // Filtrar monedas
   const filteredMonedas = monedas.filter((moneda) =>
-    moneda.descripcion.toLowerCase().includes(monedaFilter.toLowerCase())
+    moneda.descripcion.toLowerCase().includes(monedaFilter.toLowerCase()),
   );
 
   // Filtrar subfrentes
   const filteredSubfrentes = subfrentes.filter((subfrente) =>
-    subfrente.descripcion.toLowerCase().includes(subfrenteFilter.toLowerCase())
+    subfrente.descripcion.toLowerCase().includes(subfrenteFilter.toLowerCase()),
   );
 
   // 🔥 FUNCIÓN DE SUBMIT SIMPLIFICADA - SOLO VALIDA Y LLAMA A onSubmit
@@ -603,11 +603,6 @@ export function CrearFichaModal({
 
     if (!contactoSeleccionadoId) {
       setErrorMessage("Por favor seleccione un contacto");
-      return;
-    }
-
-    if (!subfrenteSeleccionadoId) {
-      setErrorMessage("Por favor seleccione un subfrente");
       return;
     }
 
@@ -774,7 +769,7 @@ export function CrearFichaModal({
                   onBlur={() =>
                     setTimeout(
                       () => setShowConsultorFichaSuggestions(false),
-                      200
+                      200,
                     )
                   }
                   placeholder={
@@ -789,7 +784,7 @@ export function CrearFichaModal({
                   type="button"
                   onClick={() =>
                     setShowConsultorFichaSuggestions(
-                      !showConsultorFichaSuggestions
+                      !showConsultorFichaSuggestions,
                     )
                   }
                   //disabled={loadingConsultores || isSubmitting}
@@ -849,7 +844,7 @@ export function CrearFichaModal({
                           setConsultorFilterFicha(consultor.nombreCompleto);
                           setConsultorSeleccionadoId(consultor.id);
                           setConsultorSeleccionadoNombre(
-                            consultor.nombreCompleto
+                            consultor.nombreCompleto,
                           );
                           setShowConsultorFichaSuggestions(false);
                           console.log("Consultor seleccionado:", consultor);
@@ -889,7 +884,7 @@ export function CrearFichaModal({
                             setConsultorFilterFicha(consultor.nombreCompleto);
                             setConsultorSeleccionadoId(consultor.id);
                             setConsultorSeleccionadoNombre(
-                              consultor.nombreCompleto
+                              consultor.nombreCompleto,
                             );
                             setShowConsultorFichaSuggestions(false);
                             console.log("Consultor seleccionado:", consultor);
