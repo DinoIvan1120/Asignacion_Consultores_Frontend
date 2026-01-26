@@ -23,6 +23,7 @@ import {
 } from "../../../../../../services/asignaciones/Empresa.js";
 import { FindAllConsultoresActivos } from "../../../../../../services/asignaciones/Consultores.js";
 import { SearchConsultoresByNombre } from "../../../../../../services/asignaciones/Consultores.js";
+import { FindAllNameMonedas } from "../../../../../../services/asignaciones/Monedas.js";
 
 export function GeneralPage() {
   const [searchParams] = useSearchParams();
@@ -40,6 +41,11 @@ export function GeneralPage() {
   // Estados para modales
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState({});
+
+  const [monedas, setMonedas] = useState([]);
+  const [monedasCompletas, setMonedasCompletas] = useState([]);
+  const [loadingMonedasList, setLoadingMonedasList] = useState(false);
+  const [showMonedaSuggestions, setShowMonedaSuggestions] = useState(false);
 
   // ============================================
   // ESTADOS PARA CAMPOS EDITABLES
@@ -154,8 +160,9 @@ export function GeneralPage() {
           costo: act?.costo || 0,
           facturable: act?.facturable ?? true,
           porcentajeAvance: act?.porcentajeAvance || 0,
-          monedaId: req.empresa?.moneda?.id || null,
-          monedaDescripcion: req.empresa?.moneda?.descripcion || "",
+          //monedaId: req.empresa?.moneda?.id || null,
+          //monedaDescripcion: req.empresa?.moneda?.descripcion || "",
+          ...extraerMonedaDeEstimacion(req.descripcionEstimacion),
 
           // 🔥 NUEVO: País inicial
           paisId: req.paisNombre?.id || null,
@@ -167,7 +174,7 @@ export function GeneralPage() {
           modalMessages.error({
             message:
               error.message || "Error al cargar la información del ticket.",
-          })
+          }),
         );
         setShowModal(true);
       } finally {
@@ -177,6 +184,63 @@ export function GeneralPage() {
 
     cargarAsignacion();
   }, [ticket_id, accessToken]);
+
+  //Cargar monedas
+  useEffect(() => {
+    const loadMonedas = async () => {
+      if (!accessToken) return;
+
+      try {
+        setLoadingMonedasList(true);
+        const response = await FindAllNameMonedas(accessToken);
+        setMonedasCompletas(response);
+        setMonedas(response.map((moneda) => moneda.descripcion));
+        console.log("Monedas cargadas:", response);
+      } catch (error) {
+        console.error("Error al cargar monedas:", error);
+        setMonedas([]);
+        setMonedasCompletas([]);
+      } finally {
+        setLoadingMonedasList(false);
+      }
+    };
+
+    loadMonedas();
+  }, [accessToken]);
+
+  // ============================================
+  // ACTUALIZAR ID DE MONEDA CUANDO SE CARGUEN LAS MONEDAS
+  // ============================================
+  useEffect(() => {
+    // Si ya tenemos una descripción de moneda pero no tenemos ID
+    if (
+      editableFields.monedaDescripcion &&
+      !editableFields.monedaId &&
+      monedasCompletas.length > 0
+    ) {
+      const monedaEncontrada = monedasCompletas.find(
+        (m) =>
+          m.descripcion.toLowerCase() ===
+          editableFields.monedaDescripcion.toLowerCase(),
+      );
+
+      if (monedaEncontrada) {
+        console.log(
+          "✅ ID de moneda actualizado:",
+          monedaEncontrada.id,
+          monedaEncontrada.descripcion,
+        );
+        setEditableFields((prev) => ({
+          ...prev,
+          monedaId: monedaEncontrada.id,
+        }));
+      }
+    }
+  }, [
+    monedasCompletas,
+    editableFields.monedaDescripcion,
+    editableFields.monedaId,
+  ]);
 
   // ============================================
   // CARGAR EMPRESAS
@@ -275,7 +339,7 @@ export function GeneralPage() {
           accessToken,
           editableFields.consultorNombre.trim(),
           0,
-          20
+          20,
         );
 
         const consultoresData = response.content.map((consultor) => ({
@@ -317,12 +381,12 @@ export function GeneralPage() {
         setLoadingClientes(true);
         console.log(
           "🔍 Cargando clientes para empresa ID:",
-          editableFields.idEmpresa
+          editableFields.idEmpresa,
         );
 
         const response = await FindClientesByEmpresa(
           accessToken,
-          editableFields.idEmpresa
+          editableFields.idEmpresa,
         );
 
         const clientesFormateados = response.map((cliente) => ({
@@ -346,43 +410,43 @@ export function GeneralPage() {
   // ============================================
   // CARGAR MONEDA POR EMPRESA
   // ============================================
-  useEffect(() => {
-    const loadMonedaByEmpresa = async () => {
-      if (!accessToken || !editableFields.idEmpresa || !isEditing) return;
+  // useEffect(() => {
+  //   const loadMonedaByEmpresa = async () => {
+  //     if (!accessToken || !editableFields.idEmpresa || !isEditing) return;
 
-      try {
-        setLoadingMoneda(true);
-        console.log(
-          "🔍 Cargando moneda para empresa ID:",
-          editableFields.idEmpresa
-        );
+  //     try {
+  //       setLoadingMoneda(true);
+  //       console.log(
+  //         "🔍 Cargando moneda para empresa ID:",
+  //         editableFields.idEmpresa,
+  //       );
 
-        const response = await FindMonedaByEmpresa(
-          accessToken,
-          editableFields.idEmpresa
-        );
+  //       const response = await FindMonedaByEmpresa(
+  //         accessToken,
+  //         editableFields.idEmpresa,
+  //       );
 
-        setEditableFields((prev) => ({
-          ...prev,
-          monedaId: response.idmoneda,
-          monedaDescripcion: response.descripcion,
-        }));
+  //       setEditableFields((prev) => ({
+  //         ...prev,
+  //         monedaId: response.idmoneda,
+  //         monedaDescripcion: response.descripcion,
+  //       }));
 
-        console.log("✅ Moneda cargada:", response);
-      } catch (error) {
-        console.error("❌ Error al cargar moneda por empresa:", error);
-        setEditableFields((prev) => ({
-          ...prev,
-          monedaId: null,
-          monedaDescripcion: "",
-        }));
-      } finally {
-        setLoadingMoneda(false);
-      }
-    };
+  //       console.log("✅ Moneda cargada:", response);
+  //     } catch (error) {
+  //       console.error("❌ Error al cargar moneda por empresa:", error);
+  //       setEditableFields((prev) => ({
+  //         ...prev,
+  //         monedaId: null,
+  //         monedaDescripcion: "",
+  //       }));
+  //     } finally {
+  //       setLoadingMoneda(false);
+  //     }
+  //   };
 
-    loadMonedaByEmpresa();
-  }, [accessToken, editableFields.idEmpresa, isEditing]);
+  //   loadMonedaByEmpresa();
+  // }, [accessToken, editableFields.idEmpresa, isEditing]);
 
   // ============================================
   // 🔥 NUEVO: CARGAR PAÍS POR EMPRESA
@@ -395,12 +459,12 @@ export function GeneralPage() {
         setLoadingPais(true);
         console.log(
           "🔍 Cargando país para empresa ID:",
-          editableFields.idEmpresa
+          editableFields.idEmpresa,
         );
 
         const response = await FindPaisByEmpresa(
           accessToken,
-          editableFields.idEmpresa
+          editableFields.idEmpresa,
         );
 
         setEditableFields((prev) => ({
@@ -438,7 +502,7 @@ export function GeneralPage() {
       const response = await FindAllConsultoresActivos(
         accessToken,
         nextPage,
-        20
+        20,
       );
 
       const nuevosConsultores = response.content.map((consultor) => ({
@@ -513,7 +577,7 @@ export function GeneralPage() {
   // 🔥 MANEJADOR ESPECIAL PARA SELECCIÓN DE EMPRESA
   const handleEmpresaSelect = (nombreEmpresa) => {
     const empresaEncontrada = empresasCompletas.find(
-      (emp) => emp.nombrecomercial === nombreEmpresa
+      (emp) => emp.nombrecomercial === nombreEmpresa,
     );
 
     if (empresaEncontrada) {
@@ -576,6 +640,24 @@ export function GeneralPage() {
         hayRequerimientoUpdates = true;
       }
 
+      if (
+        editableFields.monedaDescripcion !==
+        extraerMonedaDeEstimacion(
+          asignacionData.requerimiento.descripcionEstimacion,
+        ).monedaDescripcion
+      ) {
+        // Extraer el monto del descripcionEstimacion actual
+        const match =
+          asignacionData.requerimiento.descripcionEstimacion?.match(
+            /^([\d.]+)\s/,
+          );
+        const monto = match ? match[1] : editableFields.costo;
+
+        // Construir nueva descripcionEstimacion
+        requerimientoUpdates.descripcionEstimacion = `${monto} ${editableFields.monedaDescripcion}.`;
+        hayRequerimientoUpdates = true;
+      }
+
       // 🔥 VERIFICAR CAMBIOS EN EMPRESA
       if (
         editableFields.idEmpresa !== asignacionData.requerimiento.idEmpresa &&
@@ -620,15 +702,15 @@ export function GeneralPage() {
         console.log("  actividadOriginal completo:", actividadOriginal);
         console.log(
           "  actividadOriginal.fechainicio:",
-          actividadOriginal.fechainicio
+          actividadOriginal.fechainicio,
         );
         console.log(
           "  actividadOriginal.fechafin:",
-          actividadOriginal.fechafin
+          actividadOriginal.fechafin,
         );
         console.log(
           "  editableFields.fechainicio:",
-          editableFields.fechainicio
+          editableFields.fechainicio,
         );
         console.log("  editableFields.fechafin:", editableFields.fechafin);
 
@@ -643,7 +725,7 @@ export function GeneralPage() {
         console.log("  fechaInicioOriginal (formateada):", fechaInicioOriginal);
         console.log(
           "  ¿Son iguales?:",
-          fechaInicioInput === fechaInicioOriginal
+          fechaInicioInput === fechaInicioOriginal,
         );
 
         if (fechaInicioInput !== fechaInicioOriginal) {
@@ -681,7 +763,7 @@ export function GeneralPage() {
 
         if (editableFields.tiemporegular !== actividadOriginal.tiemporegular) {
           actividadUpdate.tiemporegular = parseFloat(
-            editableFields.tiemporegular
+            editableFields.tiemporegular,
           );
           hayActividadUpdates = true;
         }
@@ -695,7 +777,7 @@ export function GeneralPage() {
           editableFields.porcentajeAvance !== actividadOriginal.porcentajeAvance
         ) {
           actividadUpdate.porcentajeAvance = parseFloat(
-            editableFields.porcentajeAvance
+            editableFields.porcentajeAvance,
           );
           hayActividadUpdates = true;
         }
@@ -717,7 +799,7 @@ export function GeneralPage() {
         setModalData(
           modalMessages.error({
             message: "No se encontraron cambios para guardar.",
-          })
+          }),
         );
         setShowModal(true);
         setIsSaving(false);
@@ -730,7 +812,7 @@ export function GeneralPage() {
       await UpdateAsignacionCompleta(
         accessToken,
         ticket_id,
-        datosActualizacion
+        datosActualizacion,
       );
 
       console.log("✅ Actualización enviada correctamente");
@@ -739,7 +821,7 @@ export function GeneralPage() {
       console.log("🔄 Recargando datos completos...");
       const responseCompleta = await GetAsignacionCompleta(
         accessToken,
-        ticket_id
+        ticket_id,
       );
 
       console.log("✅ Datos frescos obtenidos:", responseCompleta);
@@ -775,8 +857,9 @@ export function GeneralPage() {
         costo: act?.costo || 0,
         facturable: act?.facturable ?? true,
         porcentajeAvance: act?.porcentajeAvance || 0,
-        monedaId: req.empresa?.moneda?.id || null,
-        monedaDescripcion: req.empresa?.moneda?.descripcion || "",
+        //monedaId: req.empresa?.moneda?.id || null,
+        //monedaDescripcion: req.empresa?.moneda?.descripcion || "",
+        ...extraerMonedaDeEstimacion(req.descripcionEstimacion),
 
         // 🔥 ACTUALIZAR PAÍS
         paisId: req.paisNombre?.id || null,
@@ -789,7 +872,7 @@ export function GeneralPage() {
           console.log("🔄 Recargando clientes para empresa:", req.idEmpresa);
           const clientesResponse = await FindClientesByEmpresa(
             accessToken,
-            req.idEmpresa
+            req.idEmpresa,
           );
 
           const clientesFormateados = clientesResponse.map((cliente) => ({
@@ -817,7 +900,7 @@ export function GeneralPage() {
         if (!consultorExiste) {
           console.log(
             "🔄 Agregando consultor a la lista:",
-            nombreCompletoConsultor
+            nombreCompletoConsultor,
           );
           const nuevoConsultor = {
             id: act.idusuario,
@@ -840,7 +923,7 @@ export function GeneralPage() {
       setModalData(
         modalMessages.success({
           message: `Ticket ${ticket_id} actualizado exitosamente.`,
-        })
+        }),
       );
       setShowModal(true);
       setIsEditing(false);
@@ -849,7 +932,7 @@ export function GeneralPage() {
       setModalData(
         modalMessages.error({
           message: error.message || "Error al actualizar el ticket.",
-        })
+        }),
       );
       setShowModal(true);
     } finally {
@@ -858,22 +941,73 @@ export function GeneralPage() {
   };
 
   // ============================================
+  // FUNCIÓN PARA EXTRAER MONEDA DE DESCRIPCIÓN ESTIMACIÓN
+  // ============================================
+  const extraerMonedaDeEstimacion = (descripcion) => {
+    if (!descripcion) return { monedaId: null, monedaDescripcion: "" };
+
+    // Extraer la moneda del formato "6000.0 Dolares."
+    const match = descripcion.match(/([A-Za-zÁ-ú]+)\.?$/);
+
+    if (match) {
+      const monedaNombre = match[1].trim();
+
+      // Buscar en las monedas completas para obtener el ID
+      const monedaEncontrada = monedasCompletas.find(
+        (m) => m.descripcion.toLowerCase() === monedaNombre.toLowerCase(),
+      );
+
+      return {
+        monedaId: monedaEncontrada?.id || null,
+        monedaDescripcion: monedaNombre,
+      };
+    }
+
+    return { monedaId: null, monedaDescripcion: "" };
+  };
+
+  // 🔥 MANEJADOR ESPECIAL PARA SELECCIÓN DE MONEDA
+  const handleMonedaSelect = (nombreMoneda) => {
+    const monedaEncontrada = monedasCompletas.find(
+      (m) => m.descripcion === nombreMoneda,
+    );
+
+    if (monedaEncontrada) {
+      console.log("💰 Moneda seleccionada:", monedaEncontrada);
+
+      setEditableFields((prev) => ({
+        ...prev,
+        monedaDescripcion: nombreMoneda,
+        monedaId: monedaEncontrada.id,
+      }));
+
+      setShowMonedaSuggestions(false);
+    }
+  };
+
+  // ============================================
   // FILTROS PARA AUTOCOMPLETADO
   // ============================================
   const filteredEmpresas = empresas.filter((empresa) =>
-    empresa.toLowerCase().includes(editableFields.empresaNombre.toLowerCase())
+    empresa.toLowerCase().includes(editableFields.empresaNombre.toLowerCase()),
+  );
+
+  const filteredMonedas = monedas.filter((moneda) =>
+    moneda
+      .toLowerCase()
+      .includes(editableFields.monedaDescripcion.toLowerCase()),
   );
 
   const filteredConsultores = consultores.filter((consultor) =>
     consultor.nombreCompleto
       .toLowerCase()
-      .includes(editableFields.consultorNombre.toLowerCase())
+      .includes(editableFields.consultorNombre.toLowerCase()),
   );
 
   const filteredClientes = clientes.filter((cliente) =>
     cliente.nombreCompleto
       .toLowerCase()
-      .includes(editableFields.usuarioNombre.toLowerCase())
+      .includes(editableFields.usuarioNombre.toLowerCase()),
   );
 
   // ============================================
@@ -1070,7 +1204,7 @@ export function GeneralPage() {
                                 handleInputChange("idusuario", consultor.id);
                                 handleInputChange(
                                   "consultorNombre",
-                                  consultor.nombreCompleto
+                                  consultor.nombreCompleto,
                                 );
                                 setShowConsultorSuggestions(false);
                               }}
@@ -1191,7 +1325,7 @@ export function GeneralPage() {
                               handleInputChange("idUsuario", cliente.id);
                               handleInputChange(
                                 "usuarioNombre",
-                                cliente.nombreCompleto
+                                cliente.nombreCompleto,
                               );
                               setShowClienteSuggestions(false);
                             }}
@@ -1290,7 +1424,7 @@ export function GeneralPage() {
           </div>
 
           {/* ========== MONEDA (AUTOMÁTICA) ========== */}
-          <div className="detalle__body__col--uno">
+          {/* <div className="detalle__body__col--uno">
             <label>Moneda</label>
             <div>
               <input
@@ -1303,10 +1437,153 @@ export function GeneralPage() {
                         "Seleccione una empresa"
                     : req.empresa?.moneda?.descripcion || "-"
                 }
-                className="w-100"
-                readOnly
+                className="w-100" 
+                //readOnly
                 style={{ cursor: "not-allowed", backgroundColor: "#f5f5f5" }}
               />
+            </div>
+          </div>
+
+          {/* ========== MONEDA (EDITABLE CON DROPDOWN) ========== */}
+          <div className="detalle__body__col--uno">
+            <label>Moneda</label>
+            <div style={{ position: "relative" }}>
+              {isEditing ? (
+                <>
+                  <input
+                    type="text"
+                    className="w-100"
+                    value={editableFields.monedaDescripcion}
+                    onChange={(e) =>
+                      handleInputChange("monedaDescripcion", e.target.value)
+                    }
+                    onFocus={() => setShowMonedaSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowMonedaSuggestions(false), 200)
+                    }
+                    placeholder={
+                      loadingMonedasList
+                        ? "Cargando monedas..."
+                        : "Buscar moneda..."
+                    }
+                    style={{ paddingRight: "40px" }}
+                  />
+
+                  {/* Botón desplegable */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowMonedaSuggestions(!showMonedaSuggestions)
+                    }
+                    style={{
+                      position: "absolute",
+                      right: "5px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      cursor: loadingMonedasList ? "not-allowed" : "pointer",
+                      padding: "5px 10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: loadingMonedasList ? "#ccc" : "#666",
+                    }}
+                  >
+                    <i
+                      className={`bi ${
+                        showMonedaSuggestions
+                          ? "bi-chevron-up"
+                          : "bi-chevron-down"
+                      }`}
+                      style={{ fontSize: "14px" }}
+                    ></i>
+                  </button>
+
+                  {/* Lista desplegable */}
+                  {showMonedaSuggestions && (
+                    <ul
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        backgroundColor: "white",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        maxHeight: "200px",
+                        overflowY: "auto",
+                        zIndex: 1000,
+                        listStyle: "none",
+                        padding: 0,
+                        margin: 0,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      {editableFields.monedaDescripcion &&
+                      filteredMonedas.length > 0 ? (
+                        filteredMonedas.map((moneda, index) => (
+                          <li
+                            key={index}
+                            onClick={() => handleMonedaSelect(moneda)}
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #eee",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#f0f0f0")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "white")
+                            }
+                          >
+                            {moneda}
+                          </li>
+                        ))
+                      ) : editableFields.monedaDescripcion &&
+                        filteredMonedas.length === 0 ? (
+                        <li
+                          style={{
+                            padding: "8px 12px",
+                            color: "#999",
+                            textAlign: "center",
+                          }}
+                        >
+                          No se encontraron monedas
+                        </li>
+                      ) : (
+                        monedas.map((moneda, index) => (
+                          <li
+                            key={index}
+                            onClick={() => handleMonedaSelect(moneda)}
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #eee",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#f0f0f0")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "white")
+                            }
+                          >
+                            {moneda}
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  )}
+                </>
+              ) : (
+                <input
+                  type="text"
+                  value={editableFields.monedaDescripcion || "-"}
+                  className="w-100"
+                  readOnly
+                />
+              )}
             </div>
           </div>
 

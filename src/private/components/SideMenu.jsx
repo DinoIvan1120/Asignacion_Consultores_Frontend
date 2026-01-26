@@ -46,7 +46,7 @@ export function SideMenu({ menuOpen, setMenuOpen }) {
                   <span>
                     <em className="icon-nav icon-nav--gsficha"></em>
                   </span>
-                  Informe de actividades
+                  Reporte histórico
                 </NavLink>
               </li>
             </ul>

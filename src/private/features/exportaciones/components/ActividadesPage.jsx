@@ -1,93 +1,220 @@
-// src/pages/features/seguimiento/sgr/actividades/ActividadesPage.jsx
+import { fetchDataWithoutFilters } from "../../../../hooks/exportaciones/PedidosPage/ListarPedidosProcess";
+import { MigrarSapProcess } from "../../../../hooks/exportaciones/PedidosPage/MigrarSapProcess";
+import { PedidosState } from "../../../../hooks/exportaciones/PedidosPage/PedidosState";
+import { MigrarSap } from "../../../../public/modal/exportaciones/MigrarSap";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Verificacion, Comprobacion } from "../../../../public/modal/Modals";
 import { useAuth } from "../../../../contexts/Authutils";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../../../styles/features/body.css";
 import DatePicker from "react-datepicker";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { handleApplyFilterClickPedidos } from "../../../../hooks/exportaciones/PedidosPage/PedidosProcess";
+import { format } from "date-fns";
+import { utcToZonedTime } from "date-fns-tz";
+import { CrearFichaModal } from "../../../../public/modal/exportaciones/CrearFicha";
+import { Link, Outlet } from "react-router-dom";
+import { FindAllNameCompany } from "../../../../services/asignaciones/Empresa.js";
+import { FindAllEstateRequerimient } from "../../../../services/asignaciones/EstadoRequerimiento.js";
+import { FindAllConsultoresActivos } from "../../../../services/asignaciones/Consultores.js";
+import { FindAllClientesActivos } from "../../../../services/asignaciones/Clientes.js";
+//import { FindAllAsignacionesCoordinador } from "../../../../services/asignaciones/Requerimientos.js";
 import { FindAllAsignacionesCoordinador } from "../../../../services/detalleasignaciones/listarasignaciones.js";
 import {
   extraerNombreConsultor,
   extraerFechaInicio,
   extraerFechaFinal,
 } from "../../../../helpers/extraerfechas/ParsearTitulo.js";
-import { Verificacion } from "../../../../public/modal/Modals";
+import { FindAllCodigosActivosCoordinador } from "../../../../services/asignaciones/Codigos.js";
+import { FindAllCodigosIdActivosCoordinador } from "../../../../services/asignaciones/CodigosIdRequerimientos.js";
 
-// 🔥 IMPORTAR SERVICIOS DE FILTRADO
-import { FindAllClientesActivos } from "../../../../services/asignaciones/Clientes.js";
+//Nuevos
+import { handleApplyFilterClickRequerimientos } from "../../../../hooks/exportaciones/PedidosPage/Filtrarrequerimientosprocess.js";
+import { handleClearFiltersRequerimientos } from "../../../../hooks/exportaciones/PedidosPage/Limpiarfiltrosprocess.js";
+import { FiltrarRequerimientos } from "../../../../services/asignaciones/Filtrar.js";
 import { SearchClientesByNombre } from "../../../../services/asignaciones/Clientes.js";
-import { FindAllConsultoresActivos } from "../../../../services/asignaciones/Consultores.js";
 import { SearchConsultoresByNombre } from "../../../../services/asignaciones/Consultores.js";
-import { FiltrarAsignaciones } from "../../../../services/detalleasignaciones/filtrarasignaciones.js";
-import { FindAllNameCompany } from "../../../../services/asignaciones/Empresa.js";
+import { modalMessages } from "../../../../config/modalMessages";
 
-// 🔥 IMPORTAR HOOKS DE PROCESAMIENTO
-import { handleApplyFilterClickAsignaciones } from "../../../../hooks/exportaciones/PedidosPage/FiltrarAsignacionesProcess.js";
-import { handleClearFiltersAsignaciones } from "../../../../hooks/exportaciones/PedidosPage/LimpiarFiltrosAsignacionesProcess.js";
-import { handleDownloadExcelAsignaciones } from "../../../../hooks/exportaciones/PedidosPage/DownloadExcelReporteActividadesProcess.js";
-import { format } from "date-fns";
+// 🔥 IMPORTAR SERVICIOS DE CREACIÓN
+import {
+  CreateRequerimiento,
+  CreateActividadRequerimiento,
+} from "../../../../services/asignaciones/CrearAsignaciones";
 
 export function ActividadesPage() {
+  const {
+    pedidos,
+    setPedidos,
+    modalData,
+    setModalData,
+    isMigrarModalOpen,
+    setIsMigrarModalOpen,
+    isModalMigrarSap,
+    setIsModalMigrarSap,
+    isModalOpen,
+    setIsModalOpen,
+    isLoading,
+    setIsLoading,
+    loading,
+    setLoading,
+    showFilter,
+    setShowFilter,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    orderCreationDataFilter,
+    setOrderCreationDataFilter,
+    orderNumberFilter,
+    setOrderNumberFilter,
+    customerNameFilter,
+    setCustomerNameFilter,
+    sellOrganizationFilter,
+    setSellOrganizationFilter,
+    customerNumberFilter,
+    setCutsomerNumberFilter,
+    has_fileFilter,
+    sethas_fileFilter,
+    hasAppliedFilter,
+    setHasAppliedFilter,
+    modelDataButton,
+    setModalDataButton,
+    filtradopedidos,
+    setFiltrarPedidos,
+    showModal,
+    setShowModal,
+  } = PedidosState();
+
   const { accessToken } = useAuth();
 
-  // ============================================
-  // ESTADOS PARA ASIGNACIONES
-  // ============================================
-  const [asignaciones, setAsignaciones] = useState([]);
-  const [loadingAsignaciones, setLoadingAsignaciones] = useState(false);
-  const [asignacionesPage, setAsignacionesPage] = useState(0);
-  const [asignacionesHasMore, setAsignacionesHasMore] = useState(true);
-  const [totalAsignaciones, setTotalAsignaciones] = useState(0);
-  const [asignacionesCargadas, setAsignacionesCargadas] = useState(0);
-  const [ultimaCargaCantidad, setUltimaCargaCantidad] = useState(0);
-
-  // ============================================
-  // ESTADOS PARA FILTROS
-  // ============================================
-  const [showFilter, setShowFilter] = useState(true);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [clienteFilter, setClienteFilter] = useState("");
+  // Estados para autocompletado
   const [consultorFilter, setConsultorFilter] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [loadingLimpiarFiltros, setLoadingLimpiarFiltros] = useState(false);
+  const [estadoFilter, setEstadoFilter] = useState("");
+  const [clienteFilter, setClienteFilter] = useState("");
+  const [codigoFilter, setCodigoFilter] = useState("");
+  const [idCodigoFilter, setIdCodigoFilter] = useState("");
+  const [numeroTicketFilter, setNumeroTicketFilter] = useState("");
+  const [showRazonSocialSuggestions, setShowRazonSocialSuggestions] =
+    useState(false);
+  const [showCodigoSuggestions, setShowCodigoSuggestions] = useState(false);
+  const [showNumeroTicketSuggestions, setShowNumeroTicketSuggestions] =
+    useState(false);
 
-  // ============================================
-  const [loadingDownload, setLoadingDownload] = useState(false);
+  const [razonesSociales, setRazonesSociales] = useState([]);
+  const [loadingEmpresas, setLoadingEmpresas] = useState(false);
 
-  // ============================================
-  // 🔥 ESTADOS PARA CLIENTES (COPIADOS DE PEDIDOSPAGE)
-  // ============================================
-  const [clientes, setClientes] = useState([]);
-  const [loadingClientes, setLoadingClientes] = useState(false);
-  const [clientesPage, setClientesPage] = useState(0);
-  const [clientesHasMore, setClientesHasMore] = useState(true);
-  const [showClienteSuggestions, setShowClienteSuggestions] = useState(false);
-  const [isSearchingClientes, setIsSearchingClientes] = useState(false);
+  // Estado para los estados de requerimiento
+  const [estados, setEstados] = useState([]);
+  const [loadingEstados, setLoadingEstados] = useState(false);
 
-  // ============================================
-  // 🔥 ESTADOS PARA CONSULTORES (COPIADOS DE PEDIDOSPAGE)
-  // ============================================
+  const [showEstadoSuggestions, setShowEstadoSuggestions] = useState(false);
+
+  // Estados para consultores
   const [consultores, setConsultores] = useState([]);
   const [loadingConsultores, setLoadingConsultores] = useState(false);
   const [consultoresPage, setConsultoresPage] = useState(0);
   const [consultoresHasMore, setConsultoresHasMore] = useState(true);
   const [showConsultorSuggestions, setShowConsultorSuggestions] =
     useState(false);
-  const [isSearchingConsultores, setIsSearchingConsultores] = useState(false);
 
-  //===================
+  // 🔥 NUEVOS estados para búsqueda de clientes// Para el debounce
+  const [isSearchingConsutores, setIsSearchingConsultores] = useState(false);
 
-  const [orderNumberFilter, setOrderNumberFilter] = useState("");
-
-  const [showRazonSocialSuggestions, setShowRazonSocialSuggestions] =
+  //Estados para los códigos de requerimientos
+  const [codigosRequerimiento, setCodigoRequerimiento] = useState([]);
+  const [loadingCodigoRequerimiento, setLoadingCodigoRequerimiento] =
     useState(false);
+  const [codigoRequerimientoPage, setCodigoRequerimientoPage] = useState(0);
+  const [codigoRequerimientoHasMore, setCodigoRequerimientoHasMore] =
+    useState(true);
+  const [
+    showCodigoRequerimientoSuggestions,
+    setShowCodigoRequerimientoSuggestions,
+  ] = useState(false);
 
-  const [loadingEmpresas, setLoadingEmpresas] = useState(false);
-  const [razonesSociales, setRazonesSociales] = useState([]);
+  //Estados para los id de los tickets
 
+  const [idcodigosRequerimiento, setIdCodigoRequerimiento] = useState([]);
+  const [loadingIdCodigoRequerimiento, setLoadingIdCodigoRequerimiento] =
+    useState(false);
+  const [idCodigoRequerimientoPage, setIdCodigoRequerimientoPage] = useState(0);
+  const [idCodigoRequerimientoHasMore, setIdCodigoRequerimientoHasMore] =
+    useState(true);
+  const [
+    showIdCodigoRequerimientoSuggestions,
+    setShowIdCodigoRequerimientoSuggestions,
+  ] = useState(false);
+
+  // Estados para clientes
+  const [clientes, setClientes] = useState([]);
+  const [loadingClientes, setLoadingClientes] = useState(false);
+  const [clientesPage, setClientesPage] = useState(0);
+  const [clientesHasMore, setClientesHasMore] = useState(true);
+  const [showClienteSuggestions, setShowClienteSuggestions] = useState(false);
+
+  // 🔥 NUEVOS estados para búsqueda de clientes
+  const [clienteSearchTerm, setClienteSearchTerm] = useState(""); // Para el debounce
+  const [isSearchingClientes, setIsSearchingClientes] = useState(false);
+
+  // ============================================
+  // NUEVOS ESTADOS PARA REQUERIMIENTOS PAGINADOS
+  // ============================================
+  const [requerimientos, setRequerimientos] = useState([]);
+  const [loadingRequerimientos, setLoadingRequerimientos] = useState(false);
+  const [requerimientosPage, setRequerimientosPage] = useState(0);
+  const [requerimientosHasMore, setRequerimientosHasMore] = useState(true);
+  const [totalRequerimientos, setTotalRequerimientos] = useState(0);
+  const [requerimientosCargados, setRequerimientosCargados] = useState(0);
+
+  //Limpiar
+  const [loadingLimpiarFiltros, setLoadingLimpiarFiltros] = useState(false);
+
+  //Estados adicionales
   const [empresasCompletas, setEmpresasCompletas] = useState([]); // Guardar empresas con ID
+  const [estadosCompletos, setEstadosCompletos] = useState([]); // Guardar estados con ID
+
+  // const codigosRequerimiento = [
+  //   "MAS-2025-0067",
+  //   "MAS-2025-0068",
+  //   "MAS-2025-0069",
+  //   "MAS-2025-0070",
+  //   "TIC-2025-0045",
+  //   "TIC-2025-0046",
+  //   "ADM-2025-0123",
+  //   "ADM-2025-0124",
+  // ];
+
+  const clientesAutocomplete = [
+    "MITSUI & CO PERU S.A.",
+    "COCA-COLA SERVICIOS DEL PERU S.A.",
+    "ALICORP S.A.A.",
+    "BACKUS Y JOHNSTON S.A.A.",
+    "GLORIA S.A.",
+    "NESTLÉ PERÚ S.A.",
+    "AJEPER S.A.",
+    "LINDLEY S.A.",
+    "TELEFÓNICA DEL PERÚ S.A.A.",
+    "BANCO DE CRÉDITO DEL PERÚ",
+    "INTERBANK",
+    "SCOTIABANK PERÚ S.A.A.",
+  ];
+
+  const numerosTicket = [
+    "4599",
+    "4600",
+    "4601",
+    "4602",
+    "4603",
+    "4604",
+    "4605",
+    "4606",
+    "4607",
+    "4608",
+    "4609",
+    "4610",
+  ];
 
   //Nuevo Filtrar
   useEffect(() => {
@@ -120,111 +247,39 @@ export function ActividadesPage() {
 
   // Funciones de filtrado para autocompletado
   const filteredRazonesSociales = razonesSociales.filter((razon) =>
-    razon.toLowerCase().includes(orderNumberFilter.toLowerCase())
+    razon.toLowerCase().includes(orderNumberFilter.toLowerCase()),
   );
 
-  // ============================================
-  // ESTADOS PARA MODALES
-  // ============================================
-  const [showModal, setShowModal] = useState(false);
-  const [modalData, setModalData] = useState({});
-
-  // ============================================
-  // CONFIGURACIÓN DE FECHAS
-  // ============================================
-  const minDate = useMemo(() => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - 36);
-    return date;
-  }, []);
-
-  const maxDate = useMemo(() => new Date(), []);
-
-  const isDateRangeValid = useCallback(
-    (startDate, endDate) => {
-      const oneYearLater = new Date(startDate);
-      oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-      return startDate <= maxDate && endDate <= oneYearLater;
-    },
-    [maxDate]
-  );
-
-  // ⬇️ FUNCIÓN PARA MANEJAR EL CLICK EN EL BOTÓN DESPLEGABLE
-  const handleDropdownClick = () => {
-    setShowRazonSocialSuggestions(!showRazonSocialSuggestions);
-  };
-  // ============================================
-  // CARGAR ASIGNACIONES INICIAL
-  // ============================================
+  //Nuevo Filtrar
   useEffect(() => {
-    const loadAsignacionesInicial = async () => {
+    const loadEstadosRequerimiento = async () => {
       if (!accessToken) return;
 
       try {
-        setLoadingAsignaciones(true);
-        const response = await FindAllAsignacionesCoordinador(
-          accessToken,
-          0,
-          10
-        );
+        setLoadingEstados(true);
+        const response = await FindAllEstateRequerimient(accessToken);
 
-        setAsignaciones(response.content);
-        setAsignacionesPage(0);
-        setAsignacionesHasMore(!response.last);
-        setTotalAsignaciones(response.totalElements);
-        setAsignacionesCargadas(response.content.length);
-        setUltimaCargaCantidad(response.content.length);
+        // ✅ Guardar estados completos (con ID y descripción)
+        setEstadosCompletos(response);
 
-        console.log("✅ Asignaciones cargadas:", response);
+        // Guardar solo descripciones para el autocomplete
+        const descripciones = response.map((estado) => estado.descripcion);
+        setEstados(descripciones);
+
+        console.log("Estados completos cargados:", response);
       } catch (error) {
-        console.error("❌ Error al cargar asignaciones:", error);
-        setAsignaciones([]);
+        console.error("Error al cargar estados de requerimiento:", error);
+        setEstados([]);
+        setEstadosCompletos([]);
       } finally {
-        setLoadingAsignaciones(false);
+        setLoadingEstados(false);
       }
     };
 
-    loadAsignacionesInicial();
+    loadEstadosRequerimiento();
   }, [accessToken]);
 
-  // ============================================
-  // 🔥 CARGAR CLIENTES INICIAL
-  // ============================================
-  useEffect(() => {
-    const loadClientes = async () => {
-      if (!accessToken) return;
-
-      try {
-        setLoadingClientes(true);
-        const response = await FindAllClientesActivos(accessToken, 0, 10);
-
-        const clientesData = response.content.map((cliente) => ({
-          id: cliente.idUsuario,
-          nombreCompleto:
-            cliente.nombreCompleto ||
-            `${cliente.nombres || ""} ${cliente.apepaterno || ""} ${
-              cliente.apematerno || ""
-            }`.trim(),
-        }));
-
-        setClientes(clientesData);
-        setClientesPage(0);
-        setClientesHasMore(!response.last);
-        console.log("✅ Clientes cargados:", clientesData);
-      } catch (error) {
-        console.error("❌ Error al cargar clientes:", error);
-        setClientes([]);
-      } finally {
-        setLoadingClientes(false);
-      }
-    };
-
-    loadClientes();
-  }, [accessToken]);
-
-  // ============================================
-  // 🔥 CARGAR CONSULTORES INICIAL
-  // ============================================
+  // Cargar consultores activos con paginación
   useEffect(() => {
     const loadConsultores = async () => {
       if (!accessToken) return;
@@ -245,9 +300,9 @@ export function ActividadesPage() {
         setConsultores(consultoresData);
         setConsultoresPage(0);
         setConsultoresHasMore(!response.last);
-        console.log("✅ Consultores cargados:", consultoresData);
+        console.log("Consultores cargados:", consultoresData);
       } catch (error) {
-        console.error("❌ Error al cargar consultores:", error);
+        console.error("Error al cargar consultores:", error);
         setConsultores([]);
       } finally {
         setLoadingConsultores(false);
@@ -257,9 +312,105 @@ export function ActividadesPage() {
     loadConsultores();
   }, [accessToken]);
 
-  // ============================================
-  // 🔥 BÚSQUEDA DE CLIENTES CON DEBOUNCE
-  // ============================================
+  //Código de requerimientos
+  // Cargar consultores activos con paginación
+  useEffect(() => {
+    const loadCodigoRequerimiento = async () => {
+      if (!accessToken) return;
+
+      try {
+        setLoadingCodigoRequerimiento(true);
+        const response = await FindAllCodigosActivosCoordinador(
+          accessToken,
+          0,
+          10,
+        );
+
+        const codigosRequerimientoData = response.content.map((codigo) => ({
+          idRequerimiento: codigo.idRequerimiento,
+          codRequerimiento: codigo.codRequerimiento.trim(),
+        }));
+
+        setCodigoRequerimiento(codigosRequerimientoData);
+        setCodigoRequerimientoPage(0);
+        setCodigoRequerimientoHasMore(!response.last);
+        console.log("Consultores cargados:", codigosRequerimientoData);
+      } catch (error) {
+        console.error("Error al cargar consultores:", error);
+        setCodigoRequerimiento([]);
+      } finally {
+        setLoadingCodigoRequerimiento(false);
+      }
+    };
+
+    loadCodigoRequerimiento();
+  }, [accessToken]);
+
+  //ID codigo requerimientoss
+  useEffect(() => {
+    const loadIdCodigoRequerimiento = async () => {
+      if (!accessToken) return;
+
+      try {
+        setLoadingIdCodigoRequerimiento(true);
+        const response = await FindAllCodigosIdActivosCoordinador(
+          accessToken,
+          0,
+          10,
+        );
+
+        const codigosRequerimientoData = response.content.map((codigo) => ({
+          idRequerimiento: codigo.idRequerimiento,
+        }));
+
+        setIdCodigoRequerimiento(codigosRequerimientoData);
+        setIdCodigoRequerimientoPage(0);
+        setIdCodigoRequerimientoHasMore(!response.last);
+        console.log("Id cargados:", codigosRequerimientoData);
+      } catch (error) {
+        console.error("Error al cargar Id de requerimientos:", error);
+        setIdCodigoRequerimiento([]);
+      } finally {
+        setLoadingIdCodigoRequerimiento(false);
+      }
+    };
+
+    loadIdCodigoRequerimiento();
+  }, [accessToken]);
+
+  // Cargar clientes activos con paginación
+  useEffect(() => {
+    const loadClientes = async () => {
+      if (!accessToken) return;
+
+      try {
+        setLoadingClientes(true);
+        const response = await FindAllClientesActivos(accessToken, 0, 10);
+
+        const clientesData = response.content.map((cliente) => ({
+          id: cliente.idUsuario,
+          nombreCompleto:
+            cliente.nombreCompleto ||
+            `${cliente.nombres || ""} ${cliente.apepaterno || ""} ${
+              cliente.apematerno || ""
+            }`.trim(),
+        }));
+
+        setClientes(clientesData);
+        setClientesPage(0);
+        setClientesHasMore(!response.last);
+        console.log("Clientes cargados:", clientesData);
+      } catch (error) {
+        console.error("Error al cargar clientes:", error);
+        setClientes([]);
+      } finally {
+        setLoadingClientes(false);
+      }
+    };
+
+    loadClientes();
+  }, [accessToken]);
+
   useEffect(() => {
     const searchClientes = async () => {
       if (!accessToken) return;
@@ -298,7 +449,7 @@ export function ActividadesPage() {
           accessToken,
           clienteFilter.trim(),
           0,
-          20
+          20, // Cargar más resultados en búsqueda
         );
 
         const clientesData = response.content.map((cliente) => ({
@@ -331,18 +482,16 @@ export function ActividadesPage() {
     return () => clearTimeout(timeoutId);
   }, [clienteFilter, accessToken]);
 
-  // ============================================
-  // 🔥 BÚSQUEDA DE CONSULTORES CON DEBOUNCE
-  // ============================================
+  //Consultores búsqueda con debounce
   useEffect(() => {
     const searchConsultores = async () => {
       if (!accessToken) return;
 
-      // Si el input está vacío, cargar consultores activos normales
+      // Si el input está vacío, cargar clientes activos normales
       if (!consultorFilter || consultorFilter.trim() === "") {
         try {
           setIsSearchingConsultores(true);
-          const response = await FindAllConsultoresActivos(accessToken, 0, 20);
+          const response = await FindAllConsultoresActivos(accessToken, 0, 10);
 
           const consultoresData = response.content.map((consultor) => ({
             id: consultor.idUsuario,
@@ -357,7 +506,7 @@ export function ActividadesPage() {
           setConsultoresPage(0);
           setConsultoresHasMore(!response.last);
         } catch (error) {
-          console.error("Error al cargar consultores:", error);
+          console.error("Error al cargar clientes:", error);
           setConsultores([]);
         } finally {
           setIsSearchingConsultores(false);
@@ -372,7 +521,7 @@ export function ActividadesPage() {
           accessToken,
           consultorFilter.trim(),
           0,
-          20
+          20, // Cargar más resultados en búsqueda
         );
 
         const consultoresData = response.content.map((consultor) => ({
@@ -388,10 +537,10 @@ export function ActividadesPage() {
         setConsultoresPage(0);
         setConsultoresHasMore(!response.last);
 
-        console.log("Consultores encontrados:", consultoresData);
+        console.log("Consultores no encontrados:", consultoresData);
       } catch (error) {
         console.error("Error al buscar consultores:", error);
-        setConsultores([]);
+        setClientes([]);
       } finally {
         setIsSearchingConsultores(false);
       }
@@ -406,104 +555,209 @@ export function ActividadesPage() {
   }, [consultorFilter, accessToken]);
 
   // ============================================
-  // 🔥 CARGAR MÁS ASIGNACIONES (SIMPLIFICADO - SIEMPRE USA FILTRADO)
+  // CARGAR REQUERIMIENTOS INICIAL
   // ============================================
-  const loadMoreAsignaciones = async () => {
-    if (!asignacionesHasMore || loadingAsignaciones) return;
+  useEffect(() => {
+    const loadRequerimientosInicial = async () => {
+      if (!accessToken) return;
+
+      try {
+        setLoadingRequerimientos(true);
+        const response = await FindAllAsignacionesCoordinador(
+          accessToken,
+          0,
+          10,
+        );
+
+        setRequerimientos(response.content);
+        setRequerimientosPage(0);
+        setRequerimientosHasMore(!response.last);
+        setTotalRequerimientos(response.totalElements);
+        setRequerimientosCargados(response.content.length);
+
+        console.log("Requerimientos cargados:", response);
+      } catch (error) {
+        console.error("Error al cargar requerimientos:", error);
+        setRequerimientos([]);
+      } finally {
+        setLoadingRequerimientos(false);
+      }
+    };
+
+    loadRequerimientosInicial();
+  }, [accessToken]);
+
+  //Nuevo Filtrar
+  const loadMoreRequerimientos = async () => {
+    if (!requerimientosHasMore || loadingRequerimientos) return;
 
     try {
-      setLoadingAsignaciones(true);
-      const nextPage = asignacionesPage + 1;
+      setLoadingRequerimientos(true);
+      const nextPage = requerimientosPage + 1;
 
-      // ✅ SIEMPRE construir el objeto de filtros (aunque estén vacíos)
-      const filtros = {};
+      // ✅ Verificar si hay filtros activos
+      const hayFiltrosActivos =
+        orderNumberFilter ||
+        codigoFilter ||
+        startDate ||
+        endDate ||
+        clienteFilter ||
+        idCodigoFilter ||
+        consultorFilter ||
+        estadoFilter;
 
-      // Fechas
-      if (startDate) {
-        const year = startDate.getFullYear();
-        const month = String(startDate.getMonth() + 1).padStart(2, "0");
-        const day = String(startDate.getDate()).padStart(2, "0");
-        filtros.fechaInicio = `${year}-${month}-${day}`;
-      }
-      if (endDate) {
-        const year = endDate.getFullYear();
-        const month = String(endDate.getMonth() + 1).padStart(2, "0");
-        const day = String(endDate.getDate()).padStart(2, "0");
-        filtros.fechaFin = `${year}-${month}-${day}`;
-      }
+      let response;
 
-      // Cliente (convertir a ID)
-      if (clienteFilter) {
-        const clienteEncontrado = clientes.find(
-          (cliente) =>
-            cliente.nombreCompleto.toLowerCase() === clienteFilter.toLowerCase()
-        );
-        if (clienteEncontrado) {
-          filtros.idUsuario = clienteEncontrado.id;
+      if (hayFiltrosActivos) {
+        // ✅ Si hay filtros, construir el objeto de filtros y usar FiltrarRequerimientos
+        const filtros = {};
+
+        // Convertir nombre comercial a ID
+        if (orderNumberFilter) {
+          const empresaEncontrada = empresasCompletas.find(
+            (empresa) =>
+              empresa.nombrecomercial.toLowerCase() ===
+              orderNumberFilter.toLowerCase(),
+          );
+          if (empresaEncontrada) {
+            filtros.idEmpresa = empresaEncontrada.id;
+          }
         }
+
+        // Código de requerimiento
+        if (codigoFilter && codigoFilter.trim() !== "") {
+          filtros.codRequerimiento = codigoFilter.trim();
+        }
+
+        // Fechas
+        if (startDate) {
+          filtros.fechaInicio = format(startDate, "yyyy-MM-dd");
+        }
+        if (endDate) {
+          filtros.fechaFin = format(endDate, "yyyy-MM-dd");
+        }
+
+        // Convertir cliente a ID
+        if (clienteFilter) {
+          const clienteEncontrado = clientes.find(
+            (cliente) =>
+              cliente.nombreCompleto.toLowerCase() ===
+              clienteFilter.toLowerCase(),
+          );
+          if (clienteEncontrado) {
+            filtros.idUsuario = clienteEncontrado.id;
+          }
+        }
+
+        // ID requerimiento
+        if (idCodigoFilter && idCodigoFilter.trim() !== "") {
+          const idRequerimiento = parseInt(idCodigoFilter.trim(), 10);
+          if (!isNaN(idRequerimiento)) {
+            filtros.idRequerimiento = idRequerimiento;
+          }
+        }
+
+        // D) En construcción de filtros (loadMoreRequerimientos):
+        if (consultorFilter && consultorFilter.trim() !== "") {
+          filtros.nombreConsultor = consultorFilter.trim();
+        }
+
+        // Convertir estado a ID
+        if (estadoFilter) {
+          const estadoEncontrado = estadosCompletos.find(
+            (estado) =>
+              estado.descripcion.toLowerCase() === estadoFilter.toLowerCase(),
+          );
+          if (estadoEncontrado) {
+            filtros.idEstadoRequerimiento =
+              estadoEncontrado.idEstadoRequerimiento;
+          }
+        }
+
+        // Llamar al servicio de filtrado con la siguiente página
+        response = await FiltrarRequerimientos(
+          filtros,
+          accessToken,
+          nextPage,
+          10,
+        );
+      } else {
+        // Si NO hay filtros, usar el endpoint normal
+        response = await FindAllAsignacionesCoordinador(
+          accessToken,
+          nextPage,
+          10,
+        );
       }
 
-      // Consultor (enviar nombre)
-      if (consultorFilter && consultorFilter.trim() !== "") {
-        filtros.nombreConsultor = consultorFilter.trim();
-      }
+      const nuevosRequerimientos = response.content;
 
-      if (orderNumberFilter && orderNumberFilter.trim() !== "") {
-        filtros.nombrecomercial = orderNumberFilter.trim();
-      }
+      setRequerimientos((prev) => [...prev, ...nuevosRequerimientos]);
+      setRequerimientosPage(nextPage);
+      setRequerimientosHasMore(!response.last);
+      setRequerimientosCargados((prev) => prev + nuevosRequerimientos.length);
 
-      // ✅ SIEMPRE llamar al endpoint de filtrado
-      const response = await FiltrarAsignaciones(
-        filtros,
-        accessToken,
-        nextPage,
-        10
-      );
-
-      const nuevasAsignaciones = response.content;
-      const cantidadNueva = nuevasAsignaciones.length;
-
-      setAsignaciones((prev) => [...prev, ...nuevasAsignaciones]);
-      setAsignacionesPage(nextPage);
-      setAsignacionesHasMore(!response.last);
-      setAsignacionesCargadas((prev) => prev + cantidadNueva);
-      setUltimaCargaCantidad(cantidadNueva);
-
-      console.log(`✅ Más asignaciones cargadas: ${cantidadNueva}`);
+      console.log("Más requerimientos cargados:", nuevosRequerimientos);
     } catch (error) {
-      console.error("❌ Error al cargar más asignaciones:", error);
+      console.error("Error al cargar más requerimientos:", error);
     } finally {
-      setLoadingAsignaciones(false);
+      setLoadingRequerimientos(false);
     }
   };
 
   // ============================================
-  // RETROCEDER ASIGNACIONES
+  // RETROCEDER REQUERIMIENTOS (ELIMINAR ÚLTIMOS 10)
   // ============================================
-  const retrocederAsignaciones = () => {
-    if (asignacionesCargadas <= 10 || asignacionesPage === 0) return;
+  const retrocederRequerimientos = () => {
+    if (requerimientosCargados <= 10) return; // No retroceder si solo hay 10 o menos
 
-    const cantidadAEliminar = ultimaCargaCantidad;
+    // Eliminar los últimos 10 elementos
+    setRequerimientos((prev) => prev.slice(0, -10));
 
-    setAsignaciones((prev) => prev.slice(0, -cantidadAEliminar));
-    setAsignacionesCargadas((prev) => prev - cantidadAEliminar);
-    setAsignacionesPage((prev) => prev - 1);
-    setAsignacionesHasMore(true);
-    setUltimaCargaCantidad(10);
+    // Actualizar contadores
+    setRequerimientosCargados((prev) => prev - 10);
+    setRequerimientosPage((prev) => prev - 1);
 
-    console.log(
-      `⬅️ Retrocediendo: se eliminaron ${cantidadAEliminar} asignaciones`
-    );
+    // Si estábamos en la última página, ahora hay más para cargar
+    setRequerimientosHasMore(true);
+
+    console.log("Retrocediendo: se eliminaron los últimos 10 requerimientos");
   };
 
-  const formatFechaa = (fecha) => {
-    const dia = new Date(fecha).getDate(); // devuelve número (sin cero adelante)
-    return dia;
+  // Cargar más consultores (siguiente página)
+  const loadMoreConsultores = async () => {
+    if (!consultoresHasMore || loadingConsultores || isSearchingConsutores)
+      return;
+
+    try {
+      setLoadingConsultores(true);
+      const nextPage = consultoresPage + 1;
+      const response = await FindAllConsultoresActivos(
+        accessToken,
+        nextPage,
+        20,
+      );
+
+      const nuevosConsultores = response.content.map((consultor) => ({
+        id: consultor.idUsuario,
+        nombreCompleto:
+          consultor.nombreCompleto ||
+          `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${
+            consultor.apematerno || ""
+          }`.trim(),
+      }));
+
+      setConsultores((prev) => [...prev, ...nuevosConsultores]);
+      setConsultoresPage(nextPage);
+      setConsultoresHasMore(!response.last);
+    } catch (error) {
+      console.error("Error al cargar más consultores:", error);
+    } finally {
+      setLoadingConsultores(false);
+    }
   };
 
-  // ============================================
-  // 🔥 CARGAR MÁS CLIENTES
-  // ============================================
+  // Cargar más clientes (siguiente página)
   const loadMoreClientes = async () => {
     if (!clientesHasMore || loadingClientes || isSearchingClientes) return;
 
@@ -518,7 +772,7 @@ export function ActividadesPage() {
           accessToken,
           clienteFilter.trim(),
           nextPage,
-          20
+          20,
         );
       } else {
         // Si no hay filtro, usar el endpoint normal
@@ -544,223 +798,464 @@ export function ActividadesPage() {
     }
   };
 
-  // ============================================
-  // 🔥 CARGAR MÁS CONSULTORES
-  // ============================================
-  const loadMoreConsultores = async () => {
-    if (!consultoresHasMore || loadingConsultores || isSearchingConsultores)
-      return;
+  //cargar codigos requerimientos
+  // Cargar más clientes (siguiente página)
+  const loadMoreCodigoRequerimiento = async () => {
+    if (!codigoRequerimientoHasMore || loadingCodigoRequerimiento) return;
 
     try {
-      setLoadingConsultores(true);
-      const nextPage = consultoresPage + 1;
-      const response = await FindAllConsultoresActivos(
+      setLoadingCodigoRequerimiento(true);
+      const nextPage = codigoRequerimientoPage + 1;
+      const response = await FindAllCodigosActivosCoordinador(
         accessToken,
         nextPage,
-        20
+        10,
       );
 
-      const nuevosConsultores = response.content.map((consultor) => ({
-        id: consultor.idUsuario,
-        nombreCompleto:
-          consultor.nombreCompleto ||
-          `${consultor.nombres || ""} ${consultor.apepaterno || ""} ${
-            consultor.apematerno || ""
-          }`.trim(),
+      const nuevosCodigosRequerimientos = response.content.map((codigo) => ({
+        idRequerimiento: codigo.idRequerimiento,
+        codRequerimiento: codigo.codRequerimiento.trim(),
       }));
 
-      setConsultores((prev) => [...prev, ...nuevosConsultores]);
-      setConsultoresPage(nextPage);
-      setConsultoresHasMore(!response.last);
+      setCodigoRequerimiento((prev) => [
+        ...prev,
+        ...nuevosCodigosRequerimientos,
+      ]);
+      setCodigoRequerimientoPage(nextPage);
+      setCodigoRequerimientoHasMore(!response.last);
     } catch (error) {
-      console.error("Error al cargar más consultores:", error);
+      console.error("Error al cargar más clientes:", error);
     } finally {
-      setLoadingConsultores(false);
+      setLoadingCodigoRequerimiento(false);
     }
   };
 
-  // ============================================
-  // 🔥 HANDLERS DE FILTROS (USANDO HOOKS)
-  // ============================================
-  const handleApplyFilterClick = useCallback(async () => {
-    await handleApplyFilterClickAsignaciones({
+  // Función para filtrar códigos de requerimiento
+
+  const loadMoreIdCodigoRequerimiento = async () => {
+    if (!idCodigoRequerimientoHasMore || loadingIdCodigoRequerimiento) return;
+
+    try {
+      setLoadingIdCodigoRequerimiento(true);
+      const nextPage = idCodigoRequerimientoPage + 1;
+      const response = await FindAllCodigosIdActivosCoordinador(
+        accessToken,
+        nextPage,
+        10,
+      );
+
+      const nuevosIdCodigosRequerimientos = response.content.map((codigo) => ({
+        idRequerimiento: codigo.idRequerimiento,
+      }));
+
+      setIdCodigoRequerimiento((prev) => [
+        ...prev,
+        ...nuevosIdCodigosRequerimientos,
+      ]);
+      setIdCodigoRequerimientoPage(nextPage);
+      setIdCodigoRequerimientoHasMore(!response.last);
+    } catch (error) {
+      console.error("Error al cargar más clientes:", error);
+    } finally {
+      setLoadingIdCodigoRequerimiento(false);
+    }
+  };
+
+  const filteredIdCodigosRequerimiento = idcodigosRequerimiento.filter(
+    (codigo) =>
+      codigo.idRequerimiento
+        .toString()
+        .toLowerCase()
+        .includes(idCodigoFilter.toString().toLowerCase()), // ← AGREGAR .toString()
+  );
+
+  const filteredCodigosRequerimiento = codigosRequerimiento.filter((codigo) =>
+    codigo.codRequerimiento.toLowerCase().includes(codigoFilter.toLowerCase()),
+  );
+
+  // Función para filtrar consultores
+  const filteredConsultores = consultores.filter((consultor) =>
+    consultor.nombreCompleto
+      .toLowerCase()
+      .includes(consultorFilter.toLowerCase()),
+  );
+
+  // Función para filtrar clientes (del autocomplete)
+  const filteredClientesDropdown = clientes.filter((cliente) =>
+    cliente.nombreCompleto.toLowerCase().includes(clienteFilter.toLowerCase()),
+  );
+
+  const filteredEstados = estados.filter((estado) =>
+    estado.toLowerCase().includes(estadoFilter.toLowerCase()),
+  );
+
+  const filteredNumerosTicket = numerosTicket.filter((numero) =>
+    numero.includes(numeroTicketFilter),
+  );
+
+  const handleMigrarSap = async (request_numbers, society_Value) => {
+    await MigrarSapProcess(
       accessToken,
+      request_numbers,
+      society_Value,
+      setModalData,
+      setIsMigrarModalOpen,
+      setIsModalMigrarSap,
+      fetchDataWithoutFilters,
+      setPedidos,
+    );
+  };
+
+  //Configuracion de fechas
+
+  const minDate = useMemo(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 36);
+    return date;
+  }, []);
+
+  const maxDate = useMemo(() => new Date(), []);
+
+  const isDateRangeValid = useCallback(
+    (startDate, endDate) => {
+      const oneYearLater = new Date(startDate);
+      oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+      return startDate <= maxDate && endDate <= oneYearLater;
+    },
+    [maxDate],
+  );
+
+  console.log("Resultado de pedidos: ", pedidos);
+
+  const handlerOnClickFiltro = () => {
+    setShowFilter(!showFilter);
+  };
+
+  console.log("Numero de pedido: ", orderNumberFilter);
+  console.log("Nombre de cliente: ", customerNameFilter);
+
+  //Nuevo Filtrar
+  const handleApplyFilterClick = useCallback(async () => {
+    await handleApplyFilterClickRequerimientos({
+      accessToken,
+      // Valores de los inputs
+      orderNumberFilter,
+      codigoFilter,
       startDate,
       endDate,
       clienteFilter,
+      idCodigoFilter,
       consultorFilter,
-      clientes,
-      setAsignaciones,
-      setAsignacionesPage,
-      setAsignacionesHasMore,
-      setTotalAsignaciones,
-      setAsignacionesCargadas,
-      setUltimaCargaCantidad,
+      estadoFilter,
+      // Listas completas para conversión
+      razonesSociales: empresasCompletas,
+      clientes: clientes,
+      estados: estadosCompletos,
+      // Funciones de actualización
+      setRequerimientos,
+      setRequerimientosPage,
+      setRequerimientosHasMore,
+      setTotalRequerimientos,
+      setRequerimientosCargados,
       setLoading,
       setModalData,
       setShowModal,
     });
   }, [
     accessToken,
+    orderNumberFilter,
+    codigoFilter,
     startDate,
     endDate,
     clienteFilter,
+    idCodigoFilter,
     consultorFilter,
+    estadoFilter,
+    empresasCompletas,
     clientes,
+    estadosCompletos,
+    setRequerimientos,
+    setRequerimientosPage,
+    setRequerimientosHasMore,
+    setTotalRequerimientos,
+    setRequerimientosCargados,
+    setLoading,
+    setModalData,
+    setShowModal,
   ]);
 
+  //Nuevo Filtrar Clear
+  // ============================================
+  // HANDLER PARA LIMPIAR FILTROS
+  // ============================================
   const handleClearFiltersClick = useCallback(async () => {
-    await handleClearFiltersAsignaciones({
+    await handleClearFiltersRequerimientos({
       accessToken,
+      setOrderNumberFilter,
+      setCodigoFilter,
       setStartDate,
       setEndDate,
       setClienteFilter,
-      setOrderNumberFilter,
+      setIdCodigoFilter,
       setConsultorFilter,
-      setAsignaciones,
-      setAsignacionesPage,
-      setAsignacionesHasMore,
-      setTotalAsignaciones,
-      setAsignacionesCargadas,
-      setUltimaCargaCantidad,
+      setEstadoFilter,
+      setRequerimientos,
+      setRequerimientosPage,
+      setRequerimientosHasMore,
+      setTotalRequerimientos,
+      setRequerimientosCargados,
+      //setLoadingRequerimientos,
       setLoadingLimpiarFiltros,
-    });
-  }, [accessToken]);
-
-  // ============================================
-  const handleDownloadClick = useCallback(async () => {
-    await handleDownloadExcelAsignaciones({
-      accessToken,
-      startDate,
-      endDate,
-      clienteFilter,
-      consultorFilter,
-      clientes,
-      setLoadingDownload,
-      setModalData,
-      setShowModal,
     });
   }, [
     accessToken,
-    startDate,
-    endDate,
-    clienteFilter,
-    consultorFilter,
-    clientes,
-  ]);
+    setOrderNumberFilter, // ← AGREGADA
+    setCodigoFilter, // ← AGREGADA
+    setStartDate, // ← AGREGADA
+    setEndDate, // ← AGREGADA
+    setClienteFilter, // ← AGREGADA
+    setIdCodigoFilter, // ← AGREGADA
+    setConsultorFilter, // ← AGREGADA
+    setEstadoFilter, // ← AGREGADA
+    setRequerimientos, // 15 dependencias en total
+    setRequerimientosPage,
+    setRequerimientosHasMore,
+    setTotalRequerimientos,
+    setRequerimientosCargados,
+    setLoadingLimpiarFiltros,
+    //setLoadingRequerimientos,
+  ]); // ✅ Todas las funciones incluidas
+
+  // ⬇️ FUNCIÓN PARA MANEJAR EL CLICK EN EL BOTÓN DESPLEGABLE
+  const handleDropdownClick = () => {
+    setShowRazonSocialSuggestions(!showRazonSocialSuggestions);
+  };
 
   // ============================================
-  // FILTROS PARA AUTOCOMPLETADO
+  // FUNCIÓN PARA FORMATEAR FECHAS - CORREGIDA PARA UTC
   // ============================================
-  const filteredClientesDropdown = clientes.filter((cliente) =>
-    cliente.nombreCompleto.toLowerCase().includes(clienteFilter.toLowerCase())
-  );
-
-  const filteredConsultores = consultores.filter((consultor) =>
-    consultor.nombreCompleto
-      .toLowerCase()
-      .includes(consultorFilter.toLowerCase())
-  );
-
   // ✅ AHORA (corregido con UTC)
+  // const formatFecha = (timestamp) => {
+  //   if (!timestamp) return "-";
+  //   const date = new Date(timestamp);
+  //   return date.toLocaleDateString("es-PE", {
+  //     day: "2-digit",
+  //     month: "2-digit",
+  //     year: "numeric",
+  //   });
+  // };
+
+  const extraerMonedaDeEstimacion = (descripcion) => {
+    if (!descripcion) return "-";
+
+    // Extraer la moneda del formato "6000.0 Dolares."
+    const match = descripcion.match(/([A-Za-zÁ-úñÑ]+)\.?\s*$/i);
+
+    if (match) {
+      return match[1].trim();
+    }
+
+    return "-";
+  };
+
   const formatFecha = (timestamp) => {
     if (!timestamp) return "-";
     const date = new Date(timestamp);
-    return date.toLocaleDateString("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-  // 🔥 NUEVA: Formatear fecha para enviar al backend (usa hora local)
-  const formatDateForBackend = (date) => {
-    if (!date) return "";
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
   };
 
-  const handlerOnClickFiltro = () => {
-    setShowFilter(!showFilter);
+  const formatFechaInicioFinal = (timestamp) => {
+    if (!timestamp) return "-";
+    const date = new Date(timestamp);
+    // 🔥 USAR UTC para evitar problemas de zona horaria
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  console.log(modalData);
+
+  //Función cuando se terminar de grabar en el modal crear asignaciones y es existoso
+
+  const recargarRequerimientos = async () => {
+    try {
+      setLoadingRequerimientos(true);
+      const response = await FindAllAsignacionesCoordinador(accessToken, 0, 10);
+
+      setRequerimientos(response.content);
+      setRequerimientosPage(0);
+      setRequerimientosHasMore(!response.last);
+      setTotalRequerimientos(response.totalElements);
+      setRequerimientosCargados(response.content.length);
+
+      console.log("✅ Requerimientos recargados después de crear:", response);
+    } catch (error) {
+      console.error("❌ Error al recargar requerimientos:", error);
+    } finally {
+      setLoadingRequerimientos(false);
+    }
   };
 
   // ============================================
-  // APLANAR ASIGNACIONES A FILAS DE ACTIVIDADES
+  // 🔥 FUNCIÓN CREAR ASIGNACIÓN (MOVIDA DESDE EL MODAL)
   // ============================================
-  const actividadesAplanadas = useMemo(() => {
-    const filas = [];
+  const crearAsignacion = async (datosFormulario) => {
+    try {
+      console.log("📝 Iniciando creación de asignación...");
+      console.log("📦 Datos recibidos:", datosFormulario);
 
-    asignaciones.forEach((asignacion) => {
-      const req = asignacion.requerimiento;
-      const actividades = asignacion.actividadPlanRealConsultor || [];
+      // 🔥 FUNCIÓN PARA FORMATEAR FECHAS - CORREGIDA PARA ZONA HORARIA LOCAL
+      const formatDateToISO = (dateString) => {
+        if (!dateString) return "";
 
-      if (actividades.length === 0) {
-        filas.push({
-          requerimiento: req,
-          actividad: null,
-          consultorNombre: extraerNombreConsultor(req.titulo) || "-",
-          fechaInicio: extraerFechaInicio(req.titulo) || "-",
-          fechaFinal: extraerFechaFinal(req.titulo) || "-",
+        // ✅ SOLUCIÓN: Construir fecha en zona horaria local
+        const [year, month, day] = dateString.split("-");
+        const date = new Date(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day),
+        );
+
+        // Formatear manualmente a ISO sin conversión UTC
+        const isoYear = date.getFullYear();
+        const isoMonth = String(date.getMonth() + 1).padStart(2, "0");
+        const isoDay = String(date.getDate()).padStart(2, "0");
+
+        return `${isoYear}-${isoMonth}-${isoDay}T00:00:00`;
+      };
+
+      // Formatear fechas
+      const fechaInicioISO = formatDateToISO(datosFormulario.fechaInicial);
+      const fechaFinISO = formatDateToISO(datosFormulario.fechaFinal);
+
+      console.log("📅 Fechas formateadas:");
+      console.log("  Input fechaInicial:", datosFormulario.fechaInicial);
+      console.log("  ISO fechaInicial:", fechaInicioISO);
+      console.log("  Input fechaFinal:", datosFormulario.fechaFinal);
+      console.log("  ISO fechaFinal:", fechaFinISO);
+
+      // Crear título concatenado
+      const formatDateForTitle = (dateString) => {
+        if (!dateString) return "";
+        const [year, month, day] = dateString.split("-");
+        return `${day}/${month}/${year}`;
+      };
+
+      const fechaInicioFormatted = formatDateForTitle(
+        datosFormulario.fechaInicial,
+      );
+      const fechaFinFormatted = formatDateForTitle(datosFormulario.fechaFinal);
+      const titulo = `${datosFormulario.consultorNombre} (${fechaInicioFormatted} - ${fechaFinFormatted})`;
+
+      // Formatear descripción de estimación
+      const descripcionEstimacion = `${parseFloat(datosFormulario.costo).toFixed(1)} ${datosFormulario.monedaNombre}.`;
+
+      // 📝 PASO 1: Crear Requerimiento
+      const requerimientoData = {
+        titulo: titulo,
+        idEmpresa: datosFormulario.empresaId,
+        idSubfrente: datosFormulario.subfrenteId,
+        idUsuario: datosFormulario.contactoId,
+        detalle: datosFormulario.gerencia,
+        descripcionEstimacion: descripcionEstimacion,
+        detalleAsignacion: datosFormulario.detalle,
+      };
+
+      console.log("📤 Enviando requerimiento:", requerimientoData);
+      const requerimientoCreado = await CreateRequerimiento(
+        accessToken,
+        requerimientoData,
+      );
+      console.log("✅ Requerimiento creado:", requerimientoCreado);
+
+      // 📝 PASO 2: Crear Actividad
+      const actividadData = {
+        idusuario: datosFormulario.consultorId,
+        fechainicio: fechaInicioISO,
+        fechafin: fechaFinISO,
+        idtipoactividad: datosFormulario.actividadId,
+        tiemporegular: parseFloat(datosFormulario.hora) || 0,
+        costo: parseFloat(datosFormulario.costo) || 0,
+      };
+
+      console.log(
+        "📤 Enviando actividad para requerimiento ID:",
+        requerimientoCreado.idRequerimiento,
+      );
+      console.log("📤 Datos de actividad:", actividadData);
+
+      const actividadCreada = await CreateActividadRequerimiento(
+        accessToken,
+        requerimientoCreado.idRequerimiento,
+        actividadData,
+      );
+      console.log("✅ Actividad creada:", actividadCreada);
+
+      // 🚪 Cerrar el modal
+      console.log("🚪 Cerrando modal...");
+      setIsMigrarModalOpen(false);
+
+      // ✅ Mostrar modal de éxito DESPUÉS de cerrar
+      setShowModal(true);
+      setModalData(
+        modalMessages.success({
+          message: `Se ha creado el requerimiento ${requerimientoCreado.codRequerimiento || requerimientoCreado.idRequerimiento} correctamente.`,
+        }),
+      );
+
+      // 🔄 Recargar la tabla
+      await recargarRequerimientos();
+
+      return {
+        requerimiento: requerimientoCreado,
+        actividad: actividadCreada,
+      };
+    } catch (error) {
+      console.error("❌ Error al crear asignación:", error);
+
+      // Cerrar modal primero
+      setIsMigrarModalOpen(false);
+
+      // Mostrar error después
+      setTimeout(() => {
+        setModalData({
+          title: "Error al crear asignación",
+          message:
+            error.message ||
+            "Ocurrió un error al intentar crear la asignación. Por favor, intente nuevamente.",
         });
-      } else {
-        actividades.forEach((act) => {
-          filas.push({
-            requerimiento: req,
-            actividad: act,
-            consultorNombre: act.usuario
-              ? `${act.usuario.nombres || ""} ${act.usuario.apepaterno || ""} ${
-                  act.usuario.apematerno || ""
-                }`.trim()
-              : extraerNombreConsultor(req.titulo) || "-",
-            fechaInicio: act.fechainicio
-              ? formatFecha(act.fechainicio)
-              : extraerFechaInicio(req.titulo) || "-",
-            fechaFinal: act.fechafin
-              ? formatFecha(act.fechafin)
-              : extraerFechaFinal(req.titulo) || "-",
-          });
-        });
-      }
-    });
+        setShowModal(true);
+      }, 300);
 
-    return filas;
-  }, [asignaciones]);
+      throw error;
+    }
+  };
 
   return (
     <>
       <section className="headbar headbar--abierto">
         <div className="headbar__title">
-          <h3>Informe de actividades | SGR</h3>
+          <h3>Tickets | SGR</h3>
           <p>Coordinación, control y optimización</p>
+        </div>
+
+        <div className="headbar__acciones">
+          <button
+            className="btn btn--ico btn--medium btn__secondary--outline"
+            onClick={() => setIsMigrarModalOpen(true)}
+          >
+            <i className="bi bi-arrow-repeat"></i>
+            Asignar Tickets
+          </button>
         </div>
       </section>
 
       <section className="bodyFeature">
-        <div className="bodyFeature__controls">
-          <div className="bodyFeature__controls__actions">
-            {/* <button className="btn btn__primary btn--ico">
-              <i className="bi bi-cloud-arrow-down-fill"></i>
-              Descargar
-            </button> */}
-            <button
-              className="btn btn__primary btn--ico"
-              onClick={handleDownloadClick}
-              disabled={loadingDownload}
-            >
-              {loadingDownload ? (
-                <>
-                  <FontAwesomeIcon icon={faSpinner} spin />
-                  <span> Descargando...</span>
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-cloud-arrow-down-fill"></i>
-                  Descargar
-                </>
-              )}
-            </button>
-          </div>
+        <div className="bodyFeature__controls derecha">
           <div className="bodyFeature__controls__filter">
             <button
               value="si"
@@ -773,48 +1268,10 @@ export function ActividadesPage() {
           </div>
         </div>
 
-        {/* ============================================ */}
-        {/* SECCIÓN DE FILTROS */}
-        {/* ============================================ */}
         {showFilter && (
           <div className="bodyFeature__searching form">
             <div className="bodyFeature__searching__input-container">
-              {/* FECHA INICIO */}
-              <div
-                className="bodyFeature__searching__col"
-                style={{ zIndex: 3 }}
-              >
-                <label>Fecha inicio</label>
-                <DatePicker
-                  selected={startDate}
-                  isClearable
-                  onChange={(date) => setStartDate(date)}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="Fecha inicio"
-                  minDate={minDate}
-                  maxDate={endDate || maxDate}
-                  className="custom-datepicker"
-                />
-              </div>
-
-              {/* FECHA FINAL */}
-              <div
-                className="bodyFeature__searching__col"
-                style={{ zIndex: 3 }}
-              >
-                <label>Fecha final</label>
-                <DatePicker
-                  selected={endDate}
-                  isClearable
-                  onChange={(date) => setEndDate(date)}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="Fecha final"
-                  minDate={startDate || minDate}
-                  maxDate={maxDate}
-                  className="custom-datepicker"
-                />
-              </div>
-              {/* 🔥 NOMBRE COMERCIAL CON AUTOCOMPLETADO */}
+              {/* ⬇️ INPUT DESPLEGABLE CON AUTOCOMPLETADO */}
               <div
                 className="bodyFeature__searching__col"
                 style={{ position: "relative" }}
@@ -833,7 +1290,7 @@ export function ActividadesPage() {
                     onBlur={() =>
                       setTimeout(
                         () => setShowRazonSocialSuggestions(false),
-                        200
+                        200,
                       )
                     }
                     placeholder={
@@ -886,7 +1343,7 @@ export function ActividadesPage() {
                   <ul
                     style={{
                       position: "absolute",
-                      top: "55%",
+                      top: "100%",
                       left: 0,
                       right: 0,
                       backgroundColor: "white",
@@ -965,7 +1422,604 @@ export function ActividadesPage() {
                 )}
               </div>
 
-              {/* 🔥 CONSULTOR CON AUTOCOMPLETADO */}
+              {/* Código requerimiento con autocompletado */}
+              <div
+                className="bodyFeature__searching__col"
+                style={{ position: "relative" }}
+              >
+                <label>Código Requerimiento</label>
+
+                <div style={{ position: "relative", display: "flex" }}>
+                  <input
+                    type="text"
+                    className="w-100"
+                    value={codigoFilter}
+                    onChange={(e) => {
+                      setCodigoFilter(e.target.value);
+                      setShowCodigoRequerimientoSuggestions(true);
+                    }}
+                    onFocus={() => setShowCodigoRequerimientoSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(
+                        () => setShowCodigoRequerimientoSuggestions(false),
+                        200,
+                      )
+                    }
+                    placeholder={
+                      loadingCodigoRequerimiento
+                        ? "Cargando códigos..."
+                        : "Buscar código..."
+                    }
+                    //disabled={loadingCodigoRequerimiento}
+                    style={{ paddingRight: "40px" }}
+                  />
+
+                  {/* Botón desplegable */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowCodigoRequerimientoSuggestions(
+                        !showCodigoRequerimientoSuggestions,
+                      )
+                    }
+                    //disabled={loadingCodigoRequerimiento}
+                    style={{
+                      position: "absolute",
+                      right: "5px",
+                      top: "56%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      cursor: loadingCodigoRequerimiento
+                        ? "not-allowed"
+                        : "pointer",
+                      padding: "5px 10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: loadingCodigoRequerimiento ? "#ccc" : "#666",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loadingCodigoRequerimiento)
+                        e.target.style.color = "#333";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loadingCodigoRequerimiento)
+                        e.target.style.color = "#666";
+                    }}
+                  >
+                    <i
+                      className={`bi ${
+                        showCodigoRequerimientoSuggestions
+                          ? "bi-chevron-up"
+                          : "bi-chevron-down"
+                      }`}
+                      style={{ fontSize: "14px" }}
+                    ></i>
+                  </button>
+                </div>
+
+                {/* LISTA DESPLEGABLE */}
+                {showCodigoRequerimientoSuggestions && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "white",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      maxHeight: "250px",
+                      overflowY: "auto",
+                      zIndex: 1000,
+                      listStyle: "none",
+                      padding: 0,
+                      margin: 0,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                    onMouseDown={(e) => e.preventDefault()} // evita cierre
+                  >
+                    {/* Caso con filtro */}
+                    {codigoFilter && filteredCodigosRequerimiento.length > 0 ? (
+                      filteredCodigosRequerimiento.map((item) => (
+                        <div
+                          key={item.idRequerimiento}
+                          onClick={() => {
+                            setCodigoFilter(item.codRequerimiento);
+                            setShowCodigoRequerimientoSuggestions(false);
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.backgroundColor = "#f0f0f0")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.backgroundColor = "white")
+                          }
+                        >
+                          {item.codRequerimiento}
+                        </div>
+                      ))
+                    ) : codigoFilter &&
+                      filteredCodigosRequerimiento.length === 0 ? (
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          color: "#999",
+                          textAlign: "center",
+                        }}
+                      >
+                        No se encontraron códigos
+                      </div>
+                    ) : (
+                      <>
+                        {/* Mostrar todos si no hay filtro */}
+                        {codigosRequerimiento.map((item) => (
+                          <div
+                            key={item.idRequerimiento}
+                            onClick={() => {
+                              setCodigoFilter(item.codRequerimiento);
+                              setShowCodigoRequerimientoSuggestions(false);
+                            }}
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #eee",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#f0f0f0")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "white")
+                            }
+                          >
+                            {item.codRequerimiento}
+                          </div>
+                        ))}
+
+                        {/* PAGINACIÓN */}
+                        {codigoRequerimientoHasMore && (
+                          <div
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={loadMoreCodigoRequerimiento}
+                            style={{
+                              padding: "10px 12px",
+                              cursor: "pointer",
+                              backgroundColor: "#f8f9fa",
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              color: "#007bff",
+                              borderTop: "2px solid #dee2e6",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#e9ecef")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "#f8f9fa")
+                            }
+                          >
+                            {loadingCodigoRequerimiento
+                              ? "Cargando..."
+                              : "⬇️ Cargar más códigos"}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="bodyFeature__searching__col"
+                style={{ zIndex: 3 }}
+              >
+                <label>Fecha inicio</label>
+                <DatePicker
+                  selected={startDate}
+                  isClearable
+                  onChange={(date) => setStartDate(date)}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="Fecha inicio"
+                  minDate={minDate}
+                  maxDate={endDate || maxDate}
+                  className="custom-datepicker"
+                />
+              </div>
+
+              <div
+                className="bodyFeature__searching__col"
+                style={{ zIndex: 3 }}
+              >
+                <label>Fecha final</label>
+                <DatePicker
+                  selected={endDate}
+                  isClearable
+                  onChange={(date) => setEndDate(date)}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="Fecha final"
+                  minDate={startDate || minDate}
+                  maxDate={maxDate}
+                  className="custom-datepicker"
+                />
+              </div>
+
+              {/* <div
+                className="bodyFeature__searching__col"
+                style={{ position: "relative" }}
+              >
+                <label>Cliente</label>
+                <div style={{ position: "relative", display: "flex" }}>
+                  <input
+                    type="text"
+                    className="w-100"
+                    value={clienteFilter}
+                    onChange={(e) => {
+                      setClienteFilter(e.target.value);
+                      setShowClienteSuggestions(true);
+                    }}
+                    onFocus={() => setShowClienteSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowClienteSuggestions(false), 200)
+                    }
+                    placeholder={
+                      loadingClientes
+                        ? "Cargando clientes..."
+                        : "Buscar cliente..."
+                    }
+                    
+                    style={{ paddingRight: "40px" }}
+                  />
+                 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowClienteSuggestions(!showClienteSuggestions)
+                    }
+                   
+                    style={{
+                      position: "absolute",
+                      right: "5px",
+                      top: "56%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      cursor: loadingClientes ? "not-allowed" : "pointer",
+                      padding: "5px 10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: loadingClientes ? "#ccc" : "#666",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loadingClientes) e.target.style.color = "#333";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loadingClientes) e.target.style.color = "#666";
+                    }}
+                  >
+                    <i
+                      className={`bi ${
+                        showClienteSuggestions
+                          ? "bi-chevron-up"
+                          : "bi-chevron-down"
+                      }`}
+                      style={{ fontSize: "14px" }}
+                    ></i>
+                  </button>
+                </div>
+
+                
+                {showClienteSuggestions && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "white",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      maxHeight: "250px",
+                      overflowY: "auto",
+                      zIndex: 1000,
+                      listStyle: "none",
+                      padding: 0,
+                      margin: 0,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+              
+                    {clienteFilter && filteredClientesDropdown.length > 0 ? (
+                      filteredClientesDropdown.map((cliente) => (
+                        <div
+                          key={cliente.id}
+                          onClick={() => {
+                            setClienteFilter(cliente.nombreCompleto);
+                            setShowClienteSuggestions(false);
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.backgroundColor = "#f0f0f0")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.backgroundColor = "white")
+                          }
+                        >
+                          {cliente.nombreCompleto}
+                        </div>
+                      ))
+                    ) : clienteFilter &&
+                      filteredClientesDropdown.length === 0 ? (
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          color: "#999",
+                          textAlign: "center",
+                        }}
+                      >
+                        No se encontraron clientes
+                      </div>
+                    ) : (
+          
+                      <>
+                        {clientes.map((cliente) => (
+                          <div
+                            key={cliente.id}
+                            onClick={() => {
+                              setClienteFilter(cliente.nombreCompleto);
+                              setShowClienteSuggestions(false);
+                            }}
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #eee",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#f0f0f0")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "white")
+                            }
+                          >
+                            {cliente.nombreCompleto}
+                          </div>
+                        ))}
+
+                        {clientesHasMore && (
+                          <div
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={loadMoreClientes}
+                            style={{
+                              padding: "10px 12px",
+                              cursor: "pointer",
+                              backgroundColor: "#f8f9fa",
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              color: "#007bff",
+                              borderTop: "2px solid #dee2e6",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#e9ecef")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "#f8f9fa")
+                            }
+                          >
+                            {loadingClientes
+                              ? "Cargando..."
+                              : "⬇️ Cargar más clientes"}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div> */}
+
+              {/* Número de Tickets con autocompletado */}
+              {/* ID Requerimiento con autocompletado */}
+              {/* <div
+                className="bodyFeature__searching__col"
+                style={{ position: "relative" }}
+              >
+                <label>Número de tickets</label>
+
+                <div style={{ position: "relative", display: "flex" }}>
+                  <input
+                    type="text"
+                    className="w-100"
+                    value={idCodigoFilter}
+                    onChange={(e) => {
+                      setIdCodigoFilter(e.target.value);
+                      setShowIdCodigoRequerimientoSuggestions(true);
+                    }}
+                    onFocus={() =>
+                      setShowIdCodigoRequerimientoSuggestions(true)
+                    }
+                    onBlur={() =>
+                      setTimeout(
+                        () => setShowIdCodigoRequerimientoSuggestions(false),
+                        200
+                      )
+                    }
+                    placeholder={
+                      loadingIdCodigoRequerimiento
+                        ? "Cargando IDs..."
+                        : "Buscar numero de Tickets..."
+                    }
+                    
+                    style={{ paddingRight: "40px" }}
+                  />
+
+              
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowIdCodigoRequerimientoSuggestions(
+                        !showIdCodigoRequerimientoSuggestions
+                      )
+                    }
+                   
+                    style={{
+                      position: "absolute",
+                      right: "5px",
+                      top: "56%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      cursor: loadingIdCodigoRequerimiento
+                        ? "not-allowed"
+                        : "pointer",
+                      padding: "5px 10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: loadingIdCodigoRequerimiento ? "#ccc" : "#666",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loadingIdCodigoRequerimiento)
+                        e.target.style.color = "#333";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loadingIdCodigoRequerimiento)
+                        e.target.style.color = "#666";
+                    }}
+                  >
+                    <i
+                      className={`bi ${
+                        showIdCodigoRequerimientoSuggestions
+                          ? "bi-chevron-up"
+                          : "bi-chevron-down"
+                      }`}
+                      style={{ fontSize: "14px" }}
+                    ></i>
+                  </button>
+                </div>
+
+             
+                {showIdCodigoRequerimientoSuggestions && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "white",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      maxHeight: "250px",
+                      overflowY: "auto",
+                      zIndex: 1000,
+                      listStyle: "none",
+                      padding: 0,
+                      margin: 0,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    
+                    {idCodigoFilter &&
+                    filteredIdCodigosRequerimiento.length > 0 ? (
+                      filteredIdCodigosRequerimiento.map((codigo, index) => (
+                        <div
+                          key={index}
+                          onClick={() => {
+                            setIdCodigoFilter(codigo.idRequerimiento);
+                            setShowIdCodigoRequerimientoSuggestions(false);
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.backgroundColor = "#f0f0f0")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.backgroundColor = "white")
+                          }
+                        >
+                          {codigo.idRequerimiento}
+                        </div>
+                      ))
+                    ) : idCodigoFilter &&
+                      filteredIdCodigosRequerimiento.length === 0 ? (
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          color: "#999",
+                          textAlign: "center",
+                        }}
+                      >
+                        No se encontraron IDs
+                      </div>
+                    ) : (
+                      <>
+                       
+                        {idcodigosRequerimiento.map((codigo, index) => (
+                          <div
+                            key={index}
+                            onClick={() => {
+                              setIdCodigoFilter(codigo.idRequerimiento);
+                              setShowIdCodigoRequerimientoSuggestions(false);
+                            }}
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #eee",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#f0f0f0")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "white")
+                            }
+                          >
+                            {codigo.idRequerimiento}
+                          </div>
+                        ))}
+
+                       
+                        {idCodigoRequerimientoHasMore && (
+                          <div
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={loadMoreIdCodigoRequerimiento}
+                            style={{
+                              padding: "10px 12px",
+                              cursor: "pointer",
+                              backgroundColor: "#f8f9fa",
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              color: "#007bff",
+                              borderTop: "2px solid #dee2e6",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.backgroundColor = "#e9ecef")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.backgroundColor = "#f8f9fa")
+                            }
+                          >
+                            {loadingIdCodigoRequerimiento
+                              ? "Cargando..."
+                              : "⬇️ Cargar más IDs"}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div> */}
+
               <div
                 className="bodyFeature__searching__col"
                 style={{ position: "relative" }}
@@ -989,6 +2043,7 @@ export function ActividadesPage() {
                         ? "Cargando consultores..."
                         : "Buscar consultor..."
                     }
+                    //disabled={loadingConsultores}
                     style={{ paddingRight: "40px" }}
                   />
                   {/* Botón desplegable */}
@@ -997,6 +2052,7 @@ export function ActividadesPage() {
                     onClick={() =>
                       setShowConsultorSuggestions(!showConsultorSuggestions)
                     }
+                    //disabled={loadingConsultores}
                     style={{
                       position: "absolute",
                       right: "5px",
@@ -1029,12 +2085,12 @@ export function ActividadesPage() {
                   </button>
                 </div>
 
-                {/* Lista desplegable */}
+                {/* Lista desplegable con scroll y paginación */}
                 {showConsultorSuggestions && !loadingConsultores && (
                   <div
                     style={{
                       position: "absolute",
-                      top: "55%",
+                      top: "100%",
                       left: 0,
                       right: 0,
                       backgroundColor: "white",
@@ -1048,8 +2104,8 @@ export function ActividadesPage() {
                       margin: 0,
                       boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                     }}
-                    onMouseDown={(e) => e.preventDefault()}
                   >
+                    {/* Si hay filtro de búsqueda, mostrar resultados filtrados */}
                     {consultorFilter && filteredConsultores.length > 0 ? (
                       filteredConsultores.map((consultor) => (
                         <div
@@ -1081,11 +2137,10 @@ export function ActividadesPage() {
                           textAlign: "center",
                         }}
                       >
-                        {isSearchingConsultores
-                          ? "Buscando..."
-                          : "No se encontraron consultores"}
+                        No se encontraron consultores
                       </div>
                     ) : (
+                      /* Si no hay filtro, mostrar TODAS las opciones */
                       <>
                         {consultores.map((consultor) => (
                           <div
@@ -1110,10 +2165,9 @@ export function ActividadesPage() {
                           </div>
                         ))}
 
-                        {/* Botón "Cargar más" */}
+                        {/* Botón "Cargar más" si hay más páginas */}
                         {consultoresHasMore && (
                           <div
-                            onMouseDown={(e) => e.preventDefault()}
                             onClick={loadMoreConsultores}
                             style={{
                               padding: "10px 12px",
@@ -1141,9 +2195,157 @@ export function ActividadesPage() {
                   </div>
                 )}
               </div>
+
+              {/* Estado con scroll desplegable (como empresa) */}
+              <div
+                className="bodyFeature__searching__col"
+                style={{ position: "relative" }}
+              >
+                <label>Estado</label>
+                <div style={{ position: "relative", display: "flex" }}>
+                  <input
+                    type="text"
+                    className="w-100"
+                    value={estadoFilter}
+                    onChange={(e) => {
+                      setEstadoFilter(e.target.value);
+                      setShowEstadoSuggestions(true);
+                    }}
+                    onFocus={() => setShowEstadoSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowEstadoSuggestions(false), 200)
+                    }
+                    placeholder={
+                      loadingEstados
+                        ? "Cargando estados..."
+                        : "Buscar estado..."
+                    }
+                    //disabled={loadingEstados}
+                    style={{ paddingRight: "40px" }}
+                  />
+                  {/* Botón desplegable */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowEstadoSuggestions(!showEstadoSuggestions)
+                    }
+                    //disabled={loadingEstados}
+                    style={{
+                      position: "absolute",
+                      right: "5px",
+                      top: "56%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      cursor: loadingEstados ? "not-allowed" : "pointer",
+                      padding: "5px 10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: loadingEstados ? "#ccc" : "#666",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loadingEstados) e.target.style.color = "#333";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loadingEstados) e.target.style.color = "#666";
+                    }}
+                  >
+                    <i
+                      className={`bi ${
+                        showEstadoSuggestions
+                          ? "bi-chevron-up"
+                          : "bi-chevron-down"
+                      }`}
+                      style={{ fontSize: "14px" }}
+                    ></i>
+                  </button>
+                </div>
+
+                {/* Lista desplegable con scroll */}
+                {showEstadoSuggestions && !loadingEstados && (
+                  <ul
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "white",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                      zIndex: 1000,
+                      listStyle: "none",
+                      padding: 0,
+                      margin: 0,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    {/* Si hay filtro de búsqueda, mostrar resultados filtrados */}
+                    {estadoFilter && filteredEstados.length > 0 ? (
+                      filteredEstados.map((estado, index) => (
+                        <li
+                          key={index}
+                          onClick={() => {
+                            setEstadoFilter(estado);
+                            setShowEstadoSuggestions(false);
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.backgroundColor = "#f0f0f0")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.backgroundColor = "white")
+                          }
+                        >
+                          {estado}
+                        </li>
+                      ))
+                    ) : estadoFilter && filteredEstados.length === 0 ? (
+                      <li
+                        style={{
+                          padding: "8px 12px",
+                          color: "#999",
+                          textAlign: "center",
+                        }}
+                      >
+                        No se encontraron estados
+                      </li>
+                    ) : (
+                      /* Si no hay filtro, mostrar TODAS las opciones */
+                      estados.map((estado, index) => (
+                        <li
+                          key={index}
+                          onClick={() => {
+                            setEstadoFilter(estado);
+                            setShowEstadoSuggestions(false);
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.backgroundColor = "#f0f0f0")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.backgroundColor = "white")
+                          }
+                        >
+                          {estado}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
 
-            {/* BOTONES DE FILTRO */}
             <div className="bodyFeature__searching__buttons">
               <div className="bodyFeature__controls__button">
                 <button
@@ -1153,8 +2355,9 @@ export function ActividadesPage() {
                 >
                   {loading ? (
                     <>
-                      <FontAwesomeIcon icon={faSpinner} spin />
-                      <span> Buscando...</span>
+                      <span>
+                        <FontAwesomeIcon icon={faSpinner} spin /> Buscando...
+                      </span>
                     </>
                   ) : (
                     <>
@@ -1173,7 +2376,7 @@ export function ActividadesPage() {
                   {loadingLimpiarFiltros ? (
                     <>
                       <FontAwesomeIcon icon={faSpinner} spin />
-                      <span> Limpiando...</span>
+                      Limpiando...
                     </>
                   ) : (
                     <>
@@ -1187,10 +2390,23 @@ export function ActividadesPage() {
           </div>
         )}
 
-        {/* MODAL DE VERIFICACIÓN */}
+        {isMigrarModalOpen && (
+          <CrearFichaModal
+            isOpen={isMigrarModalOpen}
+            onClose={() => setIsMigrarModalOpen(false)}
+            onSubmit={crearAsignacion}
+          />
+        )}
+
         <Verificacion
           isOpen={showModal}
           onClose={() => setShowModal(false)}
+          data={modalData}
+        />
+
+        <Comprobacion
+          isOpen={isModalMigrarSap}
+          onClose={() => setIsModalMigrarSap(false)}
           data={modalData}
         />
 
@@ -1200,9 +2416,9 @@ export function ActividadesPage() {
         <div
           className="tabla-container"
           style={{
-            height: "450px",
-            overflowY: "auto",
-            overflowX: "auto",
+            height: "450px", // Altura FIJA (no maxHeight)
+            overflowY: "auto", // Scroll vertical
+            overflowX: "auto", // Scroll horizontal si es necesario
             position: "relative",
             border: "1px solid #dee2e6",
           }}
@@ -1218,73 +2434,110 @@ export function ActividadesPage() {
             >
               <tr>
                 <th className="thead">Posición</th>
-                <th className="thead">Fecha de actividad</th>
+                <th className="thead">Fecha de creación</th>
+                <th className="thead">Nombre comercial</th>
+                <th className="thead">Código requerimiento</th>
+                <th className="thead">ID</th>
+                <th className="thead">Consultor</th>
+                {/* <th className="thead">Cliente</th> */}
+                <th className="thead">Estado requerimiento</th>
                 <th className="thead">Fecha inicio</th>
                 <th className="thead">Fecha final</th>
-                <th className="thead">Consultor</th>
-                <th className="thead">Nombre comercial</th>
-                <th className="thead theadPosition">Detalle de actividad</th>
+                <th className="thead">Moneda</th>
+                <th className="thead">Monto</th>
+                <th className="thead">-</th>
               </tr>
             </thead>
             <tbody>
-              {loadingAsignaciones && actividadesAplanadas.length === 0 ? (
+              {loadingRequerimientos && requerimientos.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="7"
+                    colSpan="13"
                     style={{ textAlign: "center", padding: "20px" }}
                   >
                     <FontAwesomeIcon icon={faSpinner} spin /> Cargando
-                    actividades...
+                    requerimientos...
                   </td>
                 </tr>
-              ) : actividadesAplanadas.length === 0 ? (
+              ) : requerimientos.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="7"
+                    colSpan="13"
                     style={{ textAlign: "center", padding: "20px" }}
                   >
-                    No hay actividades disponibles
+                    No hay requerimientos disponibles
                   </td>
                 </tr>
               ) : (
                 <>
-                  {actividadesAplanadas.map((fila, index) => (
-                    <tr
-                      key={`${fila.requerimiento.idRequerimiento}-${fila.actividad?.id || 0}-${index}`}
-                    >
-                      <td>{index + 1}</td>
-                      <td>
-                        <strong>
-                          {formatFecha(fila.requerimiento.fechaRegistro)}
-                        </strong>
-                      </td>
-                      <td>{fila.fechaInicio}</td>
-                      <td>{fila.fechaFinal}</td>
-                      <td>{fila.consultorNombre}</td>
-                      <td>
-                        {fila.requerimiento?.empresa?.nombrecomercial ?? "-"}
-                      </td>
-                      {/* <td>
-                        {fila.requerimiento.usuario
-                          ? `${fila.requerimiento.usuario.nombres ?? ""} ${
-                              fila.requerimiento.usuario.apepaterno ?? ""
-                            } ${
-                              fila.requerimiento.usuario.apematerno ?? ""
-                            }`.trim()
-                          : "-"}
-                      </td> */}
-                      <td className="tbodyPosition">
-                        {fila.actividad
-                          ? fila.actividad.descripcion || "-"
-                          : "Sin actividad asignada"}
-                      </td>
-                    </tr>
-                  ))}
+                  {requerimientos.map((item, index) => {
+                    const req = item.requerimiento; // Requerimiento principal
+                    const act = item.actividadPlanRealConsultor?.[0]; // Primera actividad del arreglo
 
-                  {/* FILA DE PAGINACIÓN */}
+                    return (
+                      <tr key={req.idRequerimiento}>
+                        <td>{index + 1}</td>
+
+                        <td>
+                          <strong>
+                            {act?.fechainicio
+                              ? formatFecha(act.fechainicio)
+                              : formatFecha(req.fechaRegistro)}
+                          </strong>
+                        </td>
+
+                        <td>{req?.empresa?.nombrecomercial ?? "-"}</td>
+
+                        <td>{req.codRequerimiento || "-"}</td>
+
+                        <td>{act?.idusuario || "-"}</td>
+
+                        <td>{extraerNombreConsultor(req.titulo) || "-"}</td>
+
+                        {/* <td>
+                          {act.usuario
+                            ? `${req.usuario.nombres ?? ""} ${req.usuario.apepaterno ?? ""} ${req.usuario.apematerno ?? ""}`.trim()
+                            : "-"}
+                        </td> */}
+
+                        {/* <td>
+                          {req.usuario
+                            ? `${req.usuario.nombres ?? ""} ${req.usuario.apepaterno ?? ""} ${req.usuario.apematerno ?? ""}`.trim()
+                            : "-"}
+                        </td> */}
+
+                        <td>{req?.estadoRequerimiento?.descripcion ?? "-"}</td>
+
+                        <td>
+                          {formatFechaInicioFinal(act?.fechainicio) || "-"}
+                        </td>
+
+                        <td>{formatFechaInicioFinal(act?.fechafin) || "-"}</td>
+
+                        <td>
+                          {/* {req?.empresa?.moneda?.descripcion ?? "desconocido"} */}
+                          {extraerMonedaDeEstimacion(req.descripcionEstimacion)}
+                        </td>
+
+                        <td>{req.descripcionEstimacion || "0.00"}</td>
+
+                        <td className="ficha__group">
+                          <Link
+                            to={`/features/seguimiento/sgr/general/?ticket_id=${req.idRequerimiento}`}
+                          >
+                            detalle
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* ============================================ */}
+                  {/* FILA ESPECIAL PARA CONTROLES DE PAGINACIÓN */}
+                  {/* ============================================ */}
                   <tr>
                     <td
-                      colSpan="7"
+                      colSpan="13"
                       style={{
                         padding: "15px",
                         textAlign: "center",
@@ -1300,12 +2553,8 @@ export function ActividadesPage() {
                           marginBottom: "10px",
                         }}
                       >
-                        Mostrando <strong>{asignacionesCargadas}</strong> de{" "}
-                        <strong>{totalAsignaciones}</strong> asignaciones
-                        <br />
-                        <small>
-                          ({actividadesAplanadas.length} actividades en total)
-                        </small>
+                        Mostrando <strong>{requerimientosCargados}</strong> de{" "}
+                        <strong>{totalRequerimientos}</strong> requerimientos
                       </div>
 
                       {/* Enlaces de navegación */}
@@ -1318,9 +2567,9 @@ export function ActividadesPage() {
                         }}
                       >
                         {/* Enlace Retroceder */}
-                        {asignacionesPage > 0 && (
+                        {requerimientosCargados > 10 && (
                           <div
-                            onClick={retrocederAsignaciones}
+                            onClick={retrocederRequerimientos}
                             style={{
                               cursor: "pointer",
                               color: "#007bff",
@@ -1342,39 +2591,42 @@ export function ActividadesPage() {
                         )}
 
                         {/* Separador */}
-                        {asignacionesPage > 0 && asignacionesHasMore && (
-                          <span style={{ color: "#dee2e6" }}>|</span>
-                        )}
+                        {requerimientosCargados > 10 &&
+                          requerimientosHasMore && (
+                            <span style={{ color: "#dee2e6" }}>|</span>
+                          )}
 
                         {/* Enlace Cargar más */}
-                        {asignacionesHasMore && (
+                        {requerimientosHasMore && (
                           <div
                             onClick={
-                              loadingAsignaciones ? null : loadMoreAsignaciones
+                              loadingRequerimientos
+                                ? null
+                                : loadMoreRequerimientos
                             }
                             style={{
-                              cursor: loadingAsignaciones
+                              cursor: loadingRequerimientos
                                 ? "not-allowed"
                                 : "pointer",
-                              color: loadingAsignaciones
+                              color: loadingRequerimientos
                                 ? "#6c757d"
                                 : "#007bff",
                               fontWeight: "bold",
                               display: "flex",
                               alignItems: "center",
                               gap: "5px",
-                              opacity: loadingAsignaciones ? 0.6 : 1,
+                              opacity: loadingRequerimientos ? 0.6 : 1,
                             }}
                             onMouseEnter={(e) => {
-                              if (!loadingAsignaciones)
+                              if (!loadingRequerimientos)
                                 e.currentTarget.style.color = "#0056b3";
                             }}
                             onMouseLeave={(e) => {
-                              if (!loadingAsignaciones)
+                              if (!loadingRequerimientos)
                                 e.currentTarget.style.color = "#007bff";
                             }}
                           >
-                            {loadingAsignaciones ? (
+                            {loadingRequerimientos ? (
                               <>
                                 <FontAwesomeIcon icon={faSpinner} spin />
                                 Cargando...
@@ -1382,7 +2634,7 @@ export function ActividadesPage() {
                             ) : (
                               <>
                                 <i className="bi bi-arrow-down-circle"></i>
-                                Cargar más asignaciones
+                                Cargar más requerimientos
                               </>
                             )}
                           </div>
@@ -1390,8 +2642,8 @@ export function ActividadesPage() {
                       </div>
 
                       {/* Mensaje cuando se cargaron todos */}
-                      {!asignacionesHasMore &&
-                        asignacionesCargadas === totalAsignaciones && (
+                      {!requerimientosHasMore &&
+                        requerimientosCargados === totalRequerimientos && (
                           <div
                             style={{
                               color: "#28a745",
@@ -1399,7 +2651,7 @@ export function ActividadesPage() {
                               marginTop: "10px",
                             }}
                           >
-                            ✓ Todas las asignaciones han sido cargadas
+                            ✓ Todos los requerimientos han sido cargados
                           </div>
                         )}
                     </td>
@@ -1410,6 +2662,8 @@ export function ActividadesPage() {
           </table>
         </div>
       </section>
+      {/* 👇 IMPORTANTE: Agrega el Outlet al final */}
+      <Outlet />
     </>
   );
 }

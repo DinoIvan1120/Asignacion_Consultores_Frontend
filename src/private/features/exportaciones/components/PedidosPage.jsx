@@ -247,7 +247,7 @@ export function PedidosPage() {
 
   // Funciones de filtrado para autocompletado
   const filteredRazonesSociales = razonesSociales.filter((razon) =>
-    razon.toLowerCase().includes(orderNumberFilter.toLowerCase())
+    razon.toLowerCase().includes(orderNumberFilter.toLowerCase()),
   );
 
   //Nuevo Filtrar
@@ -323,7 +323,7 @@ export function PedidosPage() {
         const response = await FindAllCodigosActivosCoordinador(
           accessToken,
           0,
-          10
+          10,
         );
 
         const codigosRequerimientoData = response.content.map((codigo) => ({
@@ -356,7 +356,7 @@ export function PedidosPage() {
         const response = await FindAllCodigosIdActivosCoordinador(
           accessToken,
           0,
-          10
+          10,
         );
 
         const codigosRequerimientoData = response.content.map((codigo) => ({
@@ -449,7 +449,7 @@ export function PedidosPage() {
           accessToken,
           clienteFilter.trim(),
           0,
-          20 // Cargar más resultados en búsqueda
+          20, // Cargar más resultados en búsqueda
         );
 
         const clientesData = response.content.map((cliente) => ({
@@ -521,7 +521,7 @@ export function PedidosPage() {
           accessToken,
           consultorFilter.trim(),
           0,
-          20 // Cargar más resultados en búsqueda
+          20, // Cargar más resultados en búsqueda
         );
 
         const consultoresData = response.content.map((consultor) => ({
@@ -566,7 +566,7 @@ export function PedidosPage() {
         const response = await FindAllAsignacionesCoordinador(
           accessToken,
           0,
-          10
+          10,
         );
 
         setRequerimientos(response.content);
@@ -617,7 +617,7 @@ export function PedidosPage() {
           const empresaEncontrada = empresasCompletas.find(
             (empresa) =>
               empresa.nombrecomercial.toLowerCase() ===
-              orderNumberFilter.toLowerCase()
+              orderNumberFilter.toLowerCase(),
           );
           if (empresaEncontrada) {
             filtros.idEmpresa = empresaEncontrada.id;
@@ -642,7 +642,7 @@ export function PedidosPage() {
           const clienteEncontrado = clientes.find(
             (cliente) =>
               cliente.nombreCompleto.toLowerCase() ===
-              clienteFilter.toLowerCase()
+              clienteFilter.toLowerCase(),
           );
           if (clienteEncontrado) {
             filtros.idUsuario = clienteEncontrado.id;
@@ -666,7 +666,7 @@ export function PedidosPage() {
         if (estadoFilter) {
           const estadoEncontrado = estadosCompletos.find(
             (estado) =>
-              estado.descripcion.toLowerCase() === estadoFilter.toLowerCase()
+              estado.descripcion.toLowerCase() === estadoFilter.toLowerCase(),
           );
           if (estadoEncontrado) {
             filtros.idEstadoRequerimiento =
@@ -679,14 +679,14 @@ export function PedidosPage() {
           filtros,
           accessToken,
           nextPage,
-          10
+          10,
         );
       } else {
         // Si NO hay filtros, usar el endpoint normal
         response = await FindAllAsignacionesCoordinador(
           accessToken,
           nextPage,
-          10
+          10,
         );
       }
 
@@ -735,7 +735,7 @@ export function PedidosPage() {
       const response = await FindAllConsultoresActivos(
         accessToken,
         nextPage,
-        20
+        20,
       );
 
       const nuevosConsultores = response.content.map((consultor) => ({
@@ -772,7 +772,7 @@ export function PedidosPage() {
           accessToken,
           clienteFilter.trim(),
           nextPage,
-          20
+          20,
         );
       } else {
         // Si no hay filtro, usar el endpoint normal
@@ -809,7 +809,7 @@ export function PedidosPage() {
       const response = await FindAllCodigosActivosCoordinador(
         accessToken,
         nextPage,
-        10
+        10,
       );
 
       const nuevosCodigosRequerimientos = response.content.map((codigo) => ({
@@ -841,7 +841,7 @@ export function PedidosPage() {
       const response = await FindAllCodigosIdActivosCoordinador(
         accessToken,
         nextPage,
-        10
+        10,
       );
 
       const nuevosIdCodigosRequerimientos = response.content.map((codigo) => ({
@@ -866,31 +866,31 @@ export function PedidosPage() {
       codigo.idRequerimiento
         .toString()
         .toLowerCase()
-        .includes(idCodigoFilter.toString().toLowerCase()) // ← AGREGAR .toString()
+        .includes(idCodigoFilter.toString().toLowerCase()), // ← AGREGAR .toString()
   );
 
   const filteredCodigosRequerimiento = codigosRequerimiento.filter((codigo) =>
-    codigo.codRequerimiento.toLowerCase().includes(codigoFilter.toLowerCase())
+    codigo.codRequerimiento.toLowerCase().includes(codigoFilter.toLowerCase()),
   );
 
   // Función para filtrar consultores
   const filteredConsultores = consultores.filter((consultor) =>
     consultor.nombreCompleto
       .toLowerCase()
-      .includes(consultorFilter.toLowerCase())
+      .includes(consultorFilter.toLowerCase()),
   );
 
   // Función para filtrar clientes (del autocomplete)
   const filteredClientesDropdown = clientes.filter((cliente) =>
-    cliente.nombreCompleto.toLowerCase().includes(clienteFilter.toLowerCase())
+    cliente.nombreCompleto.toLowerCase().includes(clienteFilter.toLowerCase()),
   );
 
   const filteredEstados = estados.filter((estado) =>
-    estado.toLowerCase().includes(estadoFilter.toLowerCase())
+    estado.toLowerCase().includes(estadoFilter.toLowerCase()),
   );
 
   const filteredNumerosTicket = numerosTicket.filter((numero) =>
-    numero.includes(numeroTicketFilter)
+    numero.includes(numeroTicketFilter),
   );
 
   const handleMigrarSap = async (request_numbers, society_Value) => {
@@ -902,7 +902,7 @@ export function PedidosPage() {
       setIsMigrarModalOpen,
       setIsModalMigrarSap,
       fetchDataWithoutFilters,
-      setPedidos
+      setPedidos,
     );
   };
 
@@ -922,7 +922,7 @@ export function PedidosPage() {
       oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
       return startDate <= maxDate && endDate <= oneYearLater;
     },
-    [maxDate]
+    [maxDate],
   );
 
   console.log("Resultado de pedidos: ", pedidos);
@@ -1035,14 +1035,36 @@ export function PedidosPage() {
   // FUNCIÓN PARA FORMATEAR FECHAS - CORREGIDA PARA UTC
   // ============================================
   // ✅ AHORA (corregido con UTC)
+  // const formatFecha = (timestamp) => {
+  //   if (!timestamp) return "-";
+  //   const date = new Date(timestamp);
+  //   return date.toLocaleDateString("es-PE", {
+  //     day: "2-digit",
+  //     month: "2-digit",
+  //     year: "numeric",
+  //   });
+  // };
+
+  const extraerMonedaDeEstimacion = (descripcion) => {
+    if (!descripcion) return "-";
+
+    // Extraer la moneda del formato "6000.0 Dolares."
+    const match = descripcion.match(/([A-Za-zÁ-úñÑ]+)\.?\s*$/i);
+
+    if (match) {
+      return match[1].trim();
+    }
+
+    return "-";
+  };
+
   const formatFecha = (timestamp) => {
     if (!timestamp) return "-";
     const date = new Date(timestamp);
-    return date.toLocaleDateString("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const formatFechaInicioFinal = (timestamp) => {
@@ -1095,7 +1117,7 @@ export function PedidosPage() {
         const date = new Date(
           parseInt(year),
           parseInt(month) - 1,
-          parseInt(day)
+          parseInt(day),
         );
 
         // Formatear manualmente a ISO sin conversión UTC
@@ -1124,7 +1146,7 @@ export function PedidosPage() {
       };
 
       const fechaInicioFormatted = formatDateForTitle(
-        datosFormulario.fechaInicial
+        datosFormulario.fechaInicial,
       );
       const fechaFinFormatted = formatDateForTitle(datosFormulario.fechaFinal);
       const titulo = `${datosFormulario.consultorNombre} (${fechaInicioFormatted} - ${fechaFinFormatted})`;
@@ -1146,7 +1168,7 @@ export function PedidosPage() {
       console.log("📤 Enviando requerimiento:", requerimientoData);
       const requerimientoCreado = await CreateRequerimiento(
         accessToken,
-        requerimientoData
+        requerimientoData,
       );
       console.log("✅ Requerimiento creado:", requerimientoCreado);
 
@@ -1162,14 +1184,14 @@ export function PedidosPage() {
 
       console.log(
         "📤 Enviando actividad para requerimiento ID:",
-        requerimientoCreado.idRequerimiento
+        requerimientoCreado.idRequerimiento,
       );
       console.log("📤 Datos de actividad:", actividadData);
 
       const actividadCreada = await CreateActividadRequerimiento(
         accessToken,
         requerimientoCreado.idRequerimiento,
-        actividadData
+        actividadData,
       );
       console.log("✅ Actividad creada:", actividadCreada);
 
@@ -1182,7 +1204,7 @@ export function PedidosPage() {
       setModalData(
         modalMessages.success({
           message: `Se ha creado el requerimiento ${requerimientoCreado.codRequerimiento || requerimientoCreado.idRequerimiento} correctamente.`,
-        })
+        }),
       );
 
       // 🔄 Recargar la tabla
@@ -1268,7 +1290,7 @@ export function PedidosPage() {
                     onBlur={() =>
                       setTimeout(
                         () => setShowRazonSocialSuggestions(false),
-                        200
+                        200,
                       )
                     }
                     placeholder={
@@ -1420,7 +1442,7 @@ export function PedidosPage() {
                     onBlur={() =>
                       setTimeout(
                         () => setShowCodigoRequerimientoSuggestions(false),
-                        200
+                        200,
                       )
                     }
                     placeholder={
@@ -1437,7 +1459,7 @@ export function PedidosPage() {
                     type="button"
                     onClick={() =>
                       setShowCodigoRequerimientoSuggestions(
-                        !showCodigoRequerimientoSuggestions
+                        !showCodigoRequerimientoSuggestions,
                       )
                     }
                     //disabled={loadingCodigoRequerimiento}
@@ -2448,66 +2470,81 @@ export function PedidosPage() {
                 </tr>
               ) : (
                 <>
-                  {requerimientos.map((item, index) => {
-                    const req = item.requerimiento; // Requerimiento principal
-                    const act = item.actividadPlanRealConsultor?.[0]; // Primera actividad del arreglo
+                  {requerimientos
+                    .filter((item) => {
+                      const req = item.requerimiento;
+                      return (
+                        req?.estadoRequerimiento?.descripcion?.toLowerCase() ===
+                        "en ejecucion"
+                      );
+                    })
+                    .map((item, index) => {
+                      const req = item.requerimiento; // Requerimiento principal
+                      const act = item.actividadPlanRealConsultor?.[0]; // Primera actividad del arreglo
 
-                    return (
-                      <tr key={req.idRequerimiento}>
-                        <td>{index + 1}</td>
+                      return (
+                        <tr key={req.idRequerimiento}>
+                          <td>{index + 1}</td>
 
-                        <td>
-                          <strong>
-                            {act?.fechainicio
-                              ? formatFecha(act.fechainicio)
-                              : formatFecha(req.fechaRegistro)}
-                          </strong>
-                        </td>
+                          <td>
+                            <strong>
+                              {act?.fechainicio
+                                ? formatFecha(act.fechainicio)
+                                : formatFecha(req.fechaRegistro)}
+                            </strong>
+                          </td>
 
-                        <td>{req?.empresa?.nombrecomercial ?? "-"}</td>
+                          <td>{req?.empresa?.nombrecomercial ?? "-"}</td>
 
-                        <td>{req.codRequerimiento || "-"}</td>
+                          <td>{req.codRequerimiento || "-"}</td>
 
-                        <td>{act?.idusuario || "-"}</td>
+                          <td>{act?.idusuario || "-"}</td>
 
-                        <td>{extraerNombreConsultor(req.titulo) || "-"}</td>
+                          <td>{extraerNombreConsultor(req.titulo) || "-"}</td>
 
-                        {/* <td>
+                          {/* <td>
                           {act.usuario
                             ? `${req.usuario.nombres ?? ""} ${req.usuario.apepaterno ?? ""} ${req.usuario.apematerno ?? ""}`.trim()
                             : "-"}
                         </td> */}
 
-                        {/* <td>
+                          {/* <td>
                           {req.usuario
                             ? `${req.usuario.nombres ?? ""} ${req.usuario.apepaterno ?? ""} ${req.usuario.apematerno ?? ""}`.trim()
                             : "-"}
                         </td> */}
 
-                        <td>{req?.estadoRequerimiento?.descripcion ?? "-"}</td>
+                          <td>
+                            {req?.estadoRequerimiento?.descripcion ?? "-"}
+                          </td>
 
-                        <td>
-                          {formatFechaInicioFinal(act?.fechainicio) || "-"}
-                        </td>
+                          <td>
+                            {formatFechaInicioFinal(act?.fechainicio) || "-"}
+                          </td>
 
-                        <td>{formatFechaInicioFinal(act?.fechafin) || "-"}</td>
+                          <td>
+                            {formatFechaInicioFinal(act?.fechafin) || "-"}
+                          </td>
 
-                        <td>
-                          {req?.empresa?.moneda?.descripcion ?? "desconocido"}
-                        </td>
+                          <td>
+                            {/* {req?.empresa?.moneda?.descripcion ?? "desconocido"} */}
+                            {extraerMonedaDeEstimacion(
+                              req.descripcionEstimacion,
+                            )}
+                          </td>
 
-                        <td>{req.descripcionEstimacion || "0.00"}</td>
+                          <td>{req.descripcionEstimacion || "0.00"}</td>
 
-                        <td className="ficha__group">
-                          <Link
-                            to={`/features/seguimiento/sgr/general/?ticket_id=${req.idRequerimiento}`}
-                          >
-                            detalle
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          <td className="ficha__group">
+                            <Link
+                              to={`/features/seguimiento/sgr/general/?ticket_id=${req.idRequerimiento}`}
+                            >
+                              detalle
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
 
                   {/* ============================================ */}
                   {/* FILA ESPECIAL PARA CONTROLES DE PAGINACIÓN */}
