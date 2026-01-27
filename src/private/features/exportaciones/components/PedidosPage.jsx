@@ -1072,6 +1072,9 @@ export function PedidosPage() {
     clienteFilter,
     consultorFilter,
     clientes,
+    setLoadingDownload, // ✅ Agregar
+    setModalData, // ✅ Agregar
+    setShowModal, // ✅ Agregar
   ]);
 
   const extraerMonedaDeEstimacion = (descripcion) => {
