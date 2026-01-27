@@ -46,6 +46,7 @@ export function GeneralPage() {
   const [monedasCompletas, setMonedasCompletas] = useState([]);
   const [loadingMonedasList, setLoadingMonedasList] = useState(false);
   const [showMonedaSuggestions, setShowMonedaSuggestions] = useState(false);
+  const [isEditableEjecucion, setIsEditableEjecucion] = useState(false);
 
   // ============================================
   // ESTADOS PARA CAMPOS EDITABLES
@@ -1729,14 +1730,23 @@ export function GeneralPage() {
 
           {/* ========== BOTONES DE ACCIÓN ========== */}
           <div className="text-center block-center">
-            {!isEditing && (
+            {/* {!isEditing && (
               <button
                 className="btn btn__primary btn--ico m-2"
                 onClick={() => setIsEditing(true)}
               >
                 <i className="bi bi-pencil-square"></i> Editar
               </button>
-            )}
+            )} */}
+            {!isEditing &&
+              req.estadoRequerimiento?.descripcion === "En Ejecucion" && (
+                <button
+                  className="btn btn__primary btn--ico m-2"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <i className="bi bi-pencil-square"></i> Editar
+                </button>
+              )}
             {isEditing && (
               <>
                 <button
