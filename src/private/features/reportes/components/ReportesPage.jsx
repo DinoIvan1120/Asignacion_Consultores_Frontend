@@ -740,10 +740,6 @@ export function ReportesPage() {
       <section className="bodyFeature">
         <div className="bodyFeature__controls">
           <div className="bodyFeature__controls__actions">
-            {/* <button className="btn btn__primary btn--ico">
-              <i className="bi bi-cloud-arrow-down-fill"></i>
-              Descargar
-            </button> */}
             <button
               className="btn btn__primary btn--ico"
               onClick={handleDownloadClick}

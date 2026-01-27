@@ -43,6 +43,8 @@ import {
   CreateActividadRequerimiento,
 } from "../../../../services/asignaciones/CrearAsignaciones";
 
+import { handleDownloadExcelAsignaciones } from "../../../../hooks/exportaciones/PedidosPage/DownloadExcelReporteActividadesProcess.js";
+
 export function PedidosPage() {
   const {
     pedidos,
@@ -174,6 +176,9 @@ export function PedidosPage() {
   //Estados adicionales
   const [empresasCompletas, setEmpresasCompletas] = useState([]); // Guardar empresas con ID
   const [estadosCompletos, setEstadosCompletos] = useState([]); // Guardar estados con ID
+
+  // 🔥 NUEVO: Estado para descarga de Excel
+  const [loadingDownload, setLoadingDownload] = useState(false);
 
   // const codigosRequerimiento = [
   //   "MAS-2025-0067",
@@ -1045,6 +1050,30 @@ export function PedidosPage() {
   //   });
   // };
 
+  // ============================================
+  // 🔥 NUEVO: HANDLER PARA DESCARGAR EXCEL
+  // ============================================
+  const handleDownloadClick = useCallback(async () => {
+    await handleDownloadExcelAsignaciones({
+      accessToken,
+      startDate,
+      endDate,
+      clienteFilter,
+      consultorFilter,
+      clientes,
+      setLoadingDownload,
+      setModalData,
+      setShowModal,
+    });
+  }, [
+    accessToken,
+    startDate,
+    endDate,
+    clienteFilter,
+    consultorFilter,
+    clientes,
+  ]);
+
   const extraerMonedaDeEstimacion = (descripcion) => {
     if (!descripcion) return "-";
 
@@ -1255,6 +1284,26 @@ export function PedidosPage() {
       </section>
 
       <section className="bodyFeature">
+        <div className="bodyFeature__controls__actions">
+          <button
+            className="btn btn__primary btn--ico"
+            onClick={handleDownloadClick}
+            disabled={loadingDownload}
+          >
+            {loadingDownload ? (
+              <>
+                <FontAwesomeIcon icon={faSpinner} spin />
+                <span> Descargando...</span>
+              </>
+            ) : (
+              <>
+                <i className="bi bi-cloud-arrow-down-fill"></i>
+                Descargar
+              </>
+            )}
+          </button>
+        </div>
+
         <div className="bodyFeature__controls derecha">
           <div className="bodyFeature__controls__filter">
             <button
@@ -2197,7 +2246,7 @@ export function PedidosPage() {
               </div>
 
               {/* Estado con scroll desplegable (como empresa) */}
-              <div
+              {/* <div
                 className="bodyFeature__searching__col"
                 style={{ position: "relative" }}
               >
@@ -2220,16 +2269,16 @@ export function PedidosPage() {
                         ? "Cargando estados..."
                         : "Buscar estado..."
                     }
-                    //disabled={loadingEstados}
+                    
                     style={{ paddingRight: "40px" }}
                   />
-                  {/* Botón desplegable */}
+               
                   <button
                     type="button"
                     onClick={() =>
                       setShowEstadoSuggestions(!showEstadoSuggestions)
                     }
-                    //disabled={loadingEstados}
+                    
                     style={{
                       position: "absolute",
                       right: "5px",
@@ -2262,7 +2311,6 @@ export function PedidosPage() {
                   </button>
                 </div>
 
-                {/* Lista desplegable con scroll */}
                 {showEstadoSuggestions && !loadingEstados && (
                   <ul
                     style={{
@@ -2282,7 +2330,6 @@ export function PedidosPage() {
                       boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                     }}
                   >
-                    {/* Si hay filtro de búsqueda, mostrar resultados filtrados */}
                     {estadoFilter && filteredEstados.length > 0 ? (
                       filteredEstados.map((estado, index) => (
                         <li
@@ -2317,7 +2364,6 @@ export function PedidosPage() {
                         No se encontraron estados
                       </li>
                     ) : (
-                      /* Si no hay filtro, mostrar TODAS las opciones */
                       estados.map((estado, index) => (
                         <li
                           key={index}
@@ -2343,7 +2389,7 @@ export function PedidosPage() {
                     )}
                   </ul>
                 )}
-              </div>
+              </div> */}
             </div>
 
             <div className="bodyFeature__searching__buttons">
@@ -2478,6 +2524,7 @@ export function PedidosPage() {
                         "en ejecucion"
                       );
                     })
+
                     .map((item, index) => {
                       const req = item.requerimiento; // Requerimiento principal
                       const act = item.actividadPlanRealConsultor?.[0]; // Primera actividad del arreglo
