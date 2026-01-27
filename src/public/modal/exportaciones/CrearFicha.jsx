@@ -637,10 +637,10 @@ export function CrearFichaModal({
       return;
     }
 
-    if (!subfrenteSeleccionadoId) {
-      setErrorMessage("Por favor seleccione un subfrente");
-      return;
-    }
+    // if (!subfrenteSeleccionadoId) {
+    //   setErrorMessage("Por favor seleccione un subfrente");
+    //   return;
+    // }
 
     if (!contactoSeleccionadoId) {
       setErrorMessage("Por favor seleccione un contacto");
