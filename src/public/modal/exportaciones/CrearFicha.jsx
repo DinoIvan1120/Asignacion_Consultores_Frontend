@@ -682,7 +682,7 @@ export function CrearFichaModal({
       actividadId: actividadSeleccionadaId,
       empresaId: empresaSeleccionadaId,
       contactoId: contactoSeleccionadoId,
-      subfrenteId: subfrenteSeleccionadoId,
+      subfrenteId: subfrenteSeleccionadoId || 83,
       monedaId: monedaSeleccionadaId,
       //monedaId: monedaId,
 
