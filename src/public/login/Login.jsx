@@ -28,7 +28,7 @@ export function Login() {
     setIsModalOpen,
     setErrorMessage,
     setShowModal,
-    setIsLoading
+    setIsLoading,
   );
 
   const handleSubmit = async (event) => {
@@ -54,6 +54,7 @@ export function Login() {
         onClose={closeModal}
         message={errorMessage}
       />
+      {/* login */}
       <section className="contenedor__principal">
         <section className="conteneder__principal--left">
           <LoginPublicidad />
