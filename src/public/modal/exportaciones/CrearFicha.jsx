@@ -11,20 +11,13 @@ import { useAuth } from "../../../contexts/Authutils";
 import {
   FindAllNameCompany,
   FindClientesByEmpresa,
+  FindMonedaByEmpresa,
 } from "../../../services/asignaciones/Empresa";
 import { FindAllNameMonedas } from "../../../services/asignaciones/Monedas";
 import { FindAllNameSubFrentes } from "../../../services/asignaciones/SubFrente";
 import { FindAllNameTipoActividad } from "../../../services/asignaciones/TipoActividades";
-//import { FindAllNameMonedas } from "../../../services/asignaciones/Empresa";
 
-//Importacion nuevo
-import { FindMonedaByEmpresa } from "../../../services/asignaciones/Empresa";
-
-export function CrearFichaModal({
-  isOpen,
-  onClose,
-  onSubmit, // 🔥 Función que viene del padre (PedidosPage)
-}) {
+export function CrearFichaModal({ isOpen, onClose, onSubmit }) {
   // Estados para los campos del formulario
   const [consultorValue, setConsultorValue] = useState("");
   const [actividadValue, setActividadValue] = useState("");
@@ -79,21 +72,15 @@ export function CrearFichaModal({
     useState(false);
   const [actividadFilter, setActividadFilter] = useState("");
 
-  // Monedas
-  const [monedas, setMonedas] = useState([]);
-  const [loadingMonedas, setLoadingMonedas] = useState(false);
-  const [showMonedaSuggestions, setShowMonedaSuggestions] = useState(false);
-  const [monedaFilter, setMonedaFilter] = useState("");
-
-  //MonedasEmprda
-  //const [monedaId, setMonedaId] = useState(null);
-  //const [monedaDescripcion, setMonedaDescripcion] = useState("");
-
-  // Monedas - ahora como desplegable
+  // Monedas - todas las monedas disponibles
   const [monedasPorEmpresa, setMonedasPorEmpresa] = useState([]);
+  const [loadingMonedas, setLoadingMonedas] = useState(false);
   const [showMonedaEmpresaSuggestions, setShowMonedaEmpresaSuggestions] =
     useState(false);
   const [monedaEmpresaFilter, setMonedaEmpresaFilter] = useState("");
+
+  // 🔥 NUEVO: Estado para moneda por empresa (autocompletado)
+  const [loadingMonedaPorEmpresa, setLoadingMonedaPorEmpresa] = useState(false);
 
   // Subfrentes
   const [subfrentes, setSubfrentes] = useState([]);
@@ -324,58 +311,13 @@ export function CrearFichaModal({
       if (analisisFuncional) {
         setActividadFilter(analisisFuncional.descripcion);
         setActividadSeleccionadaId(analisisFuncional.id);
-        actividadInicializada.current = true; // Marcar como inicializada
+        actividadInicializada.current = true;
         console.log("Actividad por defecto establecida:", analisisFuncional);
       }
     }
   }, [isOpen, tiposActividad]);
 
-  // Cargar monedas
-  // useEffect(() => {
-  //   const loadMonedas = async () => {
-  //     if (!accessToken) return;
-
-  //     try {
-  //       setLoadingMonedas(true);
-  //       const response = await FindAllNameMonedas(accessToken);
-  //       setMonedas(response);
-  //       console.log("Monedas cargadas:", response);
-  //     } catch (error) {
-  //       console.error("Error al cargar monedas:", error);
-  //       setMonedas([]);
-  //     } finally {
-  //       setLoadingMonedas(false);
-  //     }
-  //   };
-
-  //   loadMonedas();
-  // }, [accessToken]);
-
-  //Moneda por empresa
-
-  // useEffect(() => {
-  //   const loadMonedaByEmpresa = async () => {
-  //     if (!accessToken || !empresaSeleccionadaId) return;
-  //     try {
-  //       setLoadingMonedas(true);
-  //       const response = await FindMonedaByEmpresa(
-  //         accessToken,
-  //         empresaSeleccionadaId,
-  //       );
-  //       setMonedaId(response.idmoneda);
-  //       setMonedaDescripcion(response.descripcion); // Asumimos que response es un objeto moneda
-  //       console.log("Moneda por empresa cargada:", response);
-  //     } catch (error) {
-  //       console.error("Error al cargar moneda por empresa:", error);
-  //       setMonedas([]);
-  //     } finally {
-  //       setLoadingMonedas(false);
-  //     }
-  //   };
-  //   loadMonedaByEmpresa();
-  // }, [accessToken, empresaSeleccionadaId]);
-
-  //Solo moneda
+  // Cargar todas las monedas disponibles
   useEffect(() => {
     const loadMonedasPorEmpresa = async () => {
       if (!accessToken) {
@@ -458,51 +400,15 @@ export function CrearFichaModal({
       .includes(consultorFilterFicha.toLowerCase()),
   );
 
-  // Cargar clientes por empresa
-  // useEffect(() => {
-  //   const loadClientesPorEmpresa = async () => {
-  //     if (!accessToken || !empresaSeleccionadaId) {
-  //       setClientesPorEmpresa([]);
-  //       return;
-  //     }
-
-  //     try {
-  //       setLoadingClientes(true);
-  //       console.log(
-  //         "Cargando clientes para empresa ID:",
-  //         empresaSeleccionadaId
-  //       );
-
-  //       const response = await FindClientesByEmpresa(
-  //         accessToken,
-  //         empresaSeleccionadaId
-  //       );
-
-  //       const clientesFormateados = response.map((cliente) => ({
-  //         id: cliente.idUsuario,
-  //         nombreCompleto: cliente.nombreCompleto || "-",
-  //       }));
-
-  //       setClientesPorEmpresa(clientesFormateados);
-  //       console.log("Clientes cargados:", clientesFormateados);
-  //     } catch (error) {
-  //       console.error("Error al cargar clientes por empresa:", error);
-  //       setClientesPorEmpresa([]);
-  //     } finally {
-  //       setLoadingClientes(false);
-  //     }
-  //   };
-
-  //   loadClientesPorEmpresa();
-  // }, [accessToken, empresaSeleccionadaId]);
-
   // Agregar este ref junto con el de actividadInicializada
   const contactoInicializado = useRef(false);
+  const monedaInicializada = useRef(false); // 🔥 NUEVO: Flag para moneda
 
   // Resetear el flag cuando se selecciona una nueva empresa
   useEffect(() => {
     if (empresaSeleccionadaId) {
       contactoInicializado.current = false;
+      monedaInicializada.current = false; // 🔥 NUEVO: Resetear flag de moneda
     }
   }, [empresaSeleccionadaId]);
 
@@ -511,7 +417,6 @@ export function CrearFichaModal({
     const loadClientesPorEmpresa = async () => {
       if (!accessToken || !empresaSeleccionadaId) {
         setClientesPorEmpresa([]);
-        // 🔥 Limpiar contacto cuando no hay empresa seleccionada
         setContactoValue("");
         setContactoSeleccionadoId(null);
         return;
@@ -537,7 +442,7 @@ export function CrearFichaModal({
         setClientesPorEmpresa(clientesFormateados);
         console.log("Clientes cargados:", clientesFormateados);
 
-        // 🔥 SELECCIONAR AUTOMÁTICAMENTE EL PRIMER CLIENTE SI EXISTE
+        // Seleccionar automáticamente el primer cliente si existe
         if (clientesFormateados.length > 0 && !contactoInicializado.current) {
           const primerCliente = clientesFormateados[0];
           setContactoValue(primerCliente.nombreCompleto);
@@ -548,7 +453,6 @@ export function CrearFichaModal({
             primerCliente,
           );
         } else if (clientesFormateados.length === 0) {
-          // 🔥 Si no hay clientes, limpiar los campos
           setContactoValue("");
           setContactoSeleccionadoId(null);
           console.log("No hay clientes para esta empresa");
@@ -556,7 +460,6 @@ export function CrearFichaModal({
       } catch (error) {
         console.error("Error al cargar clientes por empresa:", error);
         setClientesPorEmpresa([]);
-        // 🔥 Limpiar contacto en caso de error
         setContactoValue("");
         setContactoSeleccionadoId(null);
       } finally {
@@ -565,6 +468,56 @@ export function CrearFichaModal({
     };
 
     loadClientesPorEmpresa();
+  }, [accessToken, empresaSeleccionadaId]);
+
+  // 🔥 NUEVO: Cargar moneda por empresa y seleccionarla automáticamente
+  useEffect(() => {
+    const loadMonedaPorEmpresa = async () => {
+      if (!accessToken || !empresaSeleccionadaId) {
+        // Limpiar moneda cuando no hay empresa seleccionada
+        setMonedaEmpresaFilter("");
+        setMonedaSeleccionadaId(null);
+        setMonedaSeleccionadaNombre("");
+        return;
+      }
+
+      try {
+        setLoadingMonedaPorEmpresa(true);
+        console.log("Cargando moneda para empresa ID:", empresaSeleccionadaId);
+
+        const response = await FindMonedaByEmpresa(
+          accessToken,
+          empresaSeleccionadaId,
+        );
+
+        console.log("Moneda por empresa obtenida:", response);
+
+        // Seleccionar automáticamente la moneda si existe y no se ha inicializado
+        if (response && response.idmoneda && !monedaInicializada.current) {
+          setMonedaEmpresaFilter(response.descripcion || "");
+          setMonedaSeleccionadaId(response.idmoneda);
+          setMonedaSeleccionadaNombre(response.descripcion || "");
+          monedaInicializada.current = true;
+          console.log("Moneda seleccionada automáticamente:", response);
+        } else if (!response || !response.idmoneda) {
+          // Si no hay moneda asociada, limpiar los campos
+          setMonedaEmpresaFilter("");
+          setMonedaSeleccionadaId(null);
+          setMonedaSeleccionadaNombre("");
+          console.log("No hay moneda asociada a esta empresa");
+        }
+      } catch (error) {
+        console.error("Error al cargar moneda por empresa:", error);
+        // En caso de error, limpiar los campos
+        setMonedaEmpresaFilter("");
+        setMonedaSeleccionadaId(null);
+        setMonedaSeleccionadaNombre("");
+      } finally {
+        setLoadingMonedaPorEmpresa(false);
+      }
+    };
+
+    loadMonedaPorEmpresa();
   }, [accessToken, empresaSeleccionadaId]);
 
   // 🔥 MANEJAR SELECCIÓN DE EMPRESA
@@ -579,8 +532,15 @@ export function CrearFichaModal({
     if (empresaEncontrada) {
       setEmpresaSeleccionadaId(empresaEncontrada.id);
       console.log("Empresa seleccionada:", empresaEncontrada);
+
+      // Limpiar contacto
       setContactoValue("");
       setContactoSeleccionadoId(null);
+
+      // 🔥 NUEVO: Limpiar moneda
+      setMonedaEmpresaFilter("");
+      setMonedaSeleccionadaId(null);
+      setMonedaSeleccionadaNombre("");
     }
   };
 
@@ -600,11 +560,6 @@ export function CrearFichaModal({
   );
 
   // Filtrar monedas
-  //const filteredMonedas = monedas.filter((moneda) =>
-  //moneda.descripcion.toLowerCase().includes(monedaFilter.toLowerCase()),
-  //);
-
-  // Filtrar monedas
   const filteredMonedasEmpresa = monedasPorEmpresa.filter((moneda) =>
     moneda.descripcion
       .toLowerCase()
@@ -619,7 +574,7 @@ export function CrearFichaModal({
   // 🔥 FUNCIÓN DE SUBMIT SIMPLIFICADA - SOLO VALIDA Y LLAMA A onSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(""); // Limpiar errores previos
+    setErrorMessage("");
 
     // ✅ VALIDACIONES BÁSICAS
     if (!consultorSeleccionadoId) {
@@ -637,28 +592,15 @@ export function CrearFichaModal({
       return;
     }
 
-    // if (!subfrenteSeleccionadoId) {
-    //   setErrorMessage("Por favor seleccione un subfrente");
-    //   return;
-    // }
-
     if (!contactoSeleccionadoId) {
       setErrorMessage("Por favor seleccione un contacto");
       return;
     }
 
-    //if (!monedaId) {
-    //setErrorMessage("La empresa seleccionada no tiene una moneda asignada");
-    //return;
-    //}
     if (!monedaSeleccionadaId) {
       setErrorMessage("Por favor seleccione una moneda");
       return;
     }
-    // if (!monedaSeleccionadaId) {
-    //   setErrorMessage("Por favor seleccione una moneda");
-    //   return;
-    // }
 
     if (!fechaInicialValue || !fechaFinalValue) {
       setErrorMessage("Por favor ingrese las fechas de inicio y fin");
@@ -684,12 +626,9 @@ export function CrearFichaModal({
       contactoId: contactoSeleccionadoId,
       subfrenteId: subfrenteSeleccionadoId || 83,
       monedaId: monedaSeleccionadaId,
-      //monedaId: monedaId,
 
       // Nombres necesarios para crear el título
       consultorNombre: consultorSeleccionadoNombre,
-      //monedaNombre: monedaSeleccionadaNombre,
-      //monedaNombre: monedaDescripcion,
       monedaNombre: monedaSeleccionadaNombre,
 
       // Fechas (string en formato yyyy-mm-dd)
@@ -707,14 +646,12 @@ export function CrearFichaModal({
 
     console.log("📤 Modal enviando datos al padre:", datosFormulario);
 
-    // ✅ LLAMAR A LA FUNCIÓN DEL PADRE (que maneja TODO: servicios, modales, recarga)
+    // ✅ LLAMAR A LA FUNCIÓN DEL PADRE
     setIsSubmitting(true);
     try {
       await onSubmit(datosFormulario);
-      // El padre se encarga de cerrar el modal, mostrar mensajes, etc.
       limpiarFormulario();
     } catch (error) {
-      // El padre maneja los errores
       console.error("Error en onSubmit:", error);
     } finally {
       setIsSubmitting(false);
@@ -729,7 +666,6 @@ export function CrearFichaModal({
     setEmpresaValue("");
     setFechaInicialValue("");
     setFechaFinalValue("");
-    //setMonedaFilter("");
     setMonedaEmpresaFilter("");
     setContactoValue("");
     setDetalleValue("");
@@ -741,17 +677,16 @@ export function CrearFichaModal({
     setConsultorSeleccionadoId(null);
     setConsultorSeleccionadoNombre("");
     setActividadSeleccionadaId(null);
-    //setMonedaId(null);
-    //setMonedaDescripcion("");
     setMonedaSeleccionadaId(null);
     setMonedaSeleccionadaNombre("");
     setSubfrenteSeleccionadoId(null);
     setContactoSeleccionadoId(null);
     setEmpresaSeleccionadaId(null);
 
-    // 🔥 Resetear flags de inicialización
+    // Resetear flags de inicialización
     actividadInicializada.current = false;
     contactoInicializado.current = false;
+    monedaInicializada.current = false;
 
     setErrorMessage("");
   };
@@ -824,7 +759,6 @@ export function CrearFichaModal({
                       ? "Cargando consultores..."
                       : "Buscar consultor..."
                   }
-                  //disabled={loadingConsultores || isSubmitting}
                   style={{ paddingRight: "40px" }}
                 />
                 <button
@@ -834,7 +768,6 @@ export function CrearFichaModal({
                       !showConsultorFichaSuggestions,
                     )
                   }
-                  //disabled={loadingConsultores || isSubmitting}
                   style={{
                     position: "absolute",
                     right: "5px",
@@ -916,7 +849,6 @@ export function CrearFichaModal({
                     <div
                       style={{
                         padding: "8px 12px",
-                        //color: "#999",
                         textAlign: "center",
                       }}
                     >
@@ -983,9 +915,6 @@ export function CrearFichaModal({
               )}
             </div>
 
-            {/* RESTO DE LOS CAMPOS SE MANTIENEN IGUAL... */}
-            {/* Por brevedad, continúo con los campos principales */}
-
             {/* Actividad */}
             <div className="form-grouppp" style={{ position: "relative" }}>
               <label htmlFor="actividad">Actividad *</label>
@@ -1009,7 +938,6 @@ export function CrearFichaModal({
                       ? "Cargando actividades..."
                       : "Buscar actividad..."
                   }
-                  //disabled={loadingActividades || isSubmitting}
                   style={{ paddingRight: "40px" }}
                 />
                 <button
@@ -1017,7 +945,6 @@ export function CrearFichaModal({
                   onClick={() =>
                     setShowActividadSuggestions(!showActividadSuggestions)
                   }
-                  //disabled={loadingActividades || isSubmitting}
                   style={{
                     position: "absolute",
                     right: "5px",
@@ -1158,6 +1085,9 @@ export function CrearFichaModal({
                       setEmpresaSeleccionadaId(null);
                       setContactoValue("");
                       setContactoSeleccionadoId(null);
+                      setMonedaEmpresaFilter("");
+                      setMonedaSeleccionadaId(null);
+                      setMonedaSeleccionadaNombre("");
                     }
                   }}
                   onFocus={() => setShowEmpresaSuggestions(true)}
@@ -1169,7 +1099,6 @@ export function CrearFichaModal({
                       ? "Cargando empresas..."
                       : "Buscar empresa..."
                   }
-                  //disabled={loadingEmpresas || isSubmitting}
                   style={{ paddingRight: "40px" }}
                 />
                 <button
@@ -1177,7 +1106,6 @@ export function CrearFichaModal({
                   onClick={() =>
                     setShowEmpresaSuggestions(!showEmpresaSuggestions)
                   }
-                  //disabled={loadingEmpresas || isSubmitting}
                   style={{
                     position: "absolute",
                     right: "5px",
@@ -1305,34 +1233,7 @@ export function CrearFichaModal({
 
           {/* Tercera fila: Moneda, Contacto, Detalle */}
           <div className="form-row">
-            {/* Moneda */}
-            {/* <div className="form-grouppp" style={{ position: "relative" }}>
-              <label htmlFor="moneda">Moneda *</label>
-
-              <input
-                type="text"
-                id="moneda"
-                className="h"
-                placeholder={
-                  !empresaSeleccionadaId
-                    ? "seleccione una empresa..."
-                    : loadingMonedas
-                      ? "Cargando clientes..."
-                      : "Buscar contacto..."
-                }
-                value={monedaDescripcion}
-                // value={
-                //   loadingMonedas
-                    ? "Cargando moneda..."
-                //     : monedaDescripcion || ""
-                // }
-                //style={{
-                  //cursor: "not-allowed",
-                //}}
-              ///>
-            //</div>
-
-            {/* Moneda */}
+            {/* 🔥 MONEDA - Autocompletada por empresa pero modificable */}
             <div className="form-grouppp" style={{ position: "relative" }}>
               <label htmlFor="moneda">Moneda *</label>
               <div style={{ position: "relative", display: "flex" }}>
@@ -1355,7 +1256,11 @@ export function CrearFichaModal({
                     )
                   }
                   placeholder={
-                    loadingMonedas ? "Cargando monedas..." : "Buscar moneda..."
+                    loadingMonedaPorEmpresa
+                      ? "Cargando moneda..."
+                      : loadingMonedas
+                        ? "Cargando monedas..."
+                        : "Buscar moneda..."
                   }
                   style={{ paddingRight: "40px" }}
                 />
@@ -1497,9 +1402,6 @@ export function CrearFichaModal({
                         ? "Cargando clientes..."
                         : "Buscar contacto..."
                   }
-                  //disabled={
-                  // !empresaSeleccionadaId || loadingClientes || isSubmitting
-                  //}
                   style={{ paddingRight: "40px" }}
                 />
                 <button
@@ -1507,9 +1409,6 @@ export function CrearFichaModal({
                   onClick={() =>
                     setShowContactoSuggestions(!showContactoSuggestions)
                   }
-                  //</div>disabled={
-                  //!empresaSeleccionadaId || loadingClientes || isSubmitting
-                  //}
                   style={{
                     position: "absolute",
                     right: "5px",
@@ -1670,7 +1569,6 @@ export function CrearFichaModal({
                       ? "Cargando subfrentes..."
                       : "Buscar subfrente..."
                   }
-                  //disabled={loadingSubfrentes || isSubmitting}
                   style={{ paddingRight: "40px" }}
                 />
                 <button
@@ -1678,7 +1576,6 @@ export function CrearFichaModal({
                   onClick={() =>
                     setShowSubfrenteSuggestions(!showSubfrenteSuggestions)
                   }
-                  //disabled={loadingSubfrentes || isSubmitting}
                   style={{
                     position: "absolute",
                     right: "5px",
@@ -1845,5 +1742,5 @@ export function CrearFichaModal({
 CrearFichaModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired, // 🔥 FUNCIÓN OBLIGATORIA DEL PADRE
+  onSubmit: PropTypes.func.isRequired,
 };
