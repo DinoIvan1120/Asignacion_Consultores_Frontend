@@ -1219,8 +1219,10 @@ export function ReportesPage() {
                 <th className="thead">Fecha inicio</th>
                 <th className="thead">Fecha final</th>
                 <th className="thead">Consultor</th>
+                <th className="thead">Requerimiento</th>
                 <th className="thead">Nombre comercial</th>
                 <th className="thead theadPosition">Detalle de actividad</th>
+                <th className="thead theadPosition">Hora</th>
               </tr>
             </thead>
             <tbody>
@@ -1258,6 +1260,7 @@ export function ReportesPage() {
                       <td>{fila.fechaInicio}</td>
                       <td>{fila.fechaFinal}</td>
                       <td>{fila.consultorNombre}</td>
+                      <td>{fila.requerimiento?.idRequerimiento || "-"}</td>
                       <td>
                         {fila.requerimiento?.empresa?.nombrecomercial ?? "-"}
                       </td>
@@ -1275,13 +1278,16 @@ export function ReportesPage() {
                           ? fila.actividad.descripcion || "-"
                           : "Sin actividad asignada"}
                       </td>
+                      <td className="tbodyPosition">
+                        {fila.actividad?.tiemporegular || "-"}
+                      </td>
                     </tr>
                   ))}
 
                   {/* FILA DE PAGINACIÓN */}
                   <tr>
                     <td
-                      colSpan="7"
+                      colSpan="9"
                       style={{
                         padding: "15px",
                         textAlign: "center",
