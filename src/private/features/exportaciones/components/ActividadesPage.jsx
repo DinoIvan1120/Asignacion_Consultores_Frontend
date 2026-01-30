@@ -250,7 +250,11 @@ export function ActividadesPage() {
     razon.toLowerCase().includes(orderNumberFilter.toLowerCase()),
   );
 
-  //Nuevo Filtrar
+  // ✅ CONSTANTE CON ESTADOS PERMITIDOS (agregar al inicio del componente, después de los imports)
+  // ✅ CONSTANTE CORREGIDA (sin tilde en ejecución)
+  const ESTADOS_PERMITIDOS = ["cancelado", "cerrado", "en ejecucion"];
+
+  // ✅ useEffect MODIFICADO (reemplazar el existente)
   useEffect(() => {
     const loadEstadosRequerimiento = async () => {
       if (!accessToken) return;
@@ -259,14 +263,21 @@ export function ActividadesPage() {
         setLoadingEstados(true);
         const response = await FindAllEstateRequerimient(accessToken);
 
-        // ✅ Guardar estados completos (con ID y descripción)
-        setEstadosCompletos(response);
+        // 🔥 FILTRAR solo estados permitidos (case-insensitive)
+        const estadosFiltrados = response.filter((estado) =>
+          ESTADOS_PERMITIDOS.includes(estado.descripcion.toLowerCase()),
+        );
+
+        // ✅ Guardar estados completos filtrados (con ID y descripción)
+        setEstadosCompletos(estadosFiltrados);
 
         // Guardar solo descripciones para el autocomplete
-        const descripciones = response.map((estado) => estado.descripcion);
+        const descripciones = estadosFiltrados.map(
+          (estado) => estado.descripcion,
+        );
         setEstados(descripciones);
 
-        console.log("Estados completos cargados:", response);
+        console.log("Estados filtrados cargados:", estadosFiltrados);
       } catch (error) {
         console.error("Error al cargar estados de requerimiento:", error);
         setEstados([]);
