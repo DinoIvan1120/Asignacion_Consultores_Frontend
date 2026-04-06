@@ -8,6 +8,7 @@ export const obtenerIniciales = (nombreCompleto) => {
   return nombreArray.map((nombre) => nombre.charAt(0)).join("");
 };
 
+//prueba
 //Función para cerrar sesión
 export function DashboardNavegation(setShowLogoutPopup) {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export function useFectchUserData(
   setUserIniciales,
   setRole,
   setShowModal,
-  setModalData
+  setModalData,
 ) {
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +40,7 @@ export function useFectchUserData(
           setLoading(false);
           setUserIniciales(
             (prevIniciales) =>
-              obtenerIniciales(userName.nombres) || prevIniciales
+              obtenerIniciales(userName.nombres) || prevIniciales,
           );
           setRole(userName.rol || "");
           setUserEmail(userName.nombres);
@@ -52,7 +53,7 @@ export function useFectchUserData(
         setLoading(false);
         setShowModal(true);
         setModalData(
-          modalMessages.error({ message: `No existe token: ${accessToken}` })
+          modalMessages.error({ message: `No existe token: ${accessToken}` }),
         );
       }
     };
